@@ -11,6 +11,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/go-querystring v1.1.0 // indirect
+	github.com/ilyakaznacheev/cleanenv v1.2.6
 	github.com/jackc/pgproto3/v2 v2.0.7 // indirect
 	github.com/jackc/pgx/v4 v4.11.0 // indirect
 	github.com/joho/godotenv v1.3.0
@@ -20,6 +21,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/pelletier/go-toml v1.8.1 // indirect
 	github.com/satori/go.uuid v1.2.0
+	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/afero v1.6.0 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
