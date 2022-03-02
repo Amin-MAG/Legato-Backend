@@ -3,9 +3,9 @@ package usecase
 import (
 	"legato_server/api"
 	"legato_server/authenticate"
-	legatoDb "legato_server/db"
 	"legato_server/domain"
 	"legato_server/env"
+	legatoDb "legato_server/postgres"
 	"testing"
 	"time"
 

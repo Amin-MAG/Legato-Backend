@@ -1,4 +1,4 @@
-package legatoDb
+package postgres
 
 import (
 	"bytes"
@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
 
@@ -34,13 +33,13 @@ type httpGetRequestData struct {
 
 func (w *httpRequestData) UnmarshalJSON(data []byte) error {
 	type superhttpRequestData httpRequestData
-	var getData httpGetRequestData 
+	var getData httpGetRequestData
 	if err := json.Unmarshal(data, &getData); err == nil {
-	  w.Url = getData.Url
-	  w.Method = getData.Method
-	  w.Body = make(map[string]interface{})
-	} else{
-		err =  json.Unmarshal(data, (*superhttpRequestData)(w))
+		w.Url = getData.Url
+		w.Method = getData.Method
+		w.Body = make(map[string]interface{})
+	} else {
+		err = json.Unmarshal(data, (*superhttpRequestData)(w))
 	}
 	return nil
 }
@@ -124,7 +123,7 @@ func (h Http) Execute(...interface{}) {
 	if err != nil {
 		log.Println(err)
 	}
-	_, err = makeHttpRequest(data.Url, data.Method, requestBody, nil ,h.Service.ScenarioID, &h.Service.ID)
+	_, err = makeHttpRequest(data.Url, data.Method, requestBody, nil, h.Service.ScenarioID, &h.Service.ID)
 	if err != nil {
 		log.Println(err)
 	}
@@ -134,7 +133,7 @@ func (h Http) Execute(...interface{}) {
 
 func (h Http) Post() {
 	data := fmt.Sprintf("Executing type (%s) node in background : %s\n", httpType, h.Service.Name)
-	SendLogMessage(data, *h.Service.ScenarioID, nil) 
+	SendLogMessage(data, *h.Service.ScenarioID, nil)
 }
 
 func (h Http) Next(...interface{}) {

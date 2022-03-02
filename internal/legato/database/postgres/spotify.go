@@ -1,11 +1,9 @@
-package legatoDb
+package postgres
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"legato_server/env"
-	"log"
 	"time"
 
 	"github.com/zmb3/spotify"
@@ -16,19 +14,19 @@ import (
 const spotifyType string = "spotifies"
 const addTrackToPlaylist string = "addToPlaylist"
 const getTopTracks string = "getTopTracks"
- 
+
 var (
-	scopes = []string{spotify.ScopePlaylistModifyPrivate, spotify.ScopeUserReadPrivate}
-	auth  = getAuth
+	scopes      = []string{spotify.ScopePlaylistModifyPrivate, spotify.ScopeUserReadPrivate}
+	auth        = getAuth
 	redirectURI = getRedirectURI
-) 
+)
 
-
-func getRedirectURI() string{
-	return fmt.Sprintf("%s/redirect/spotify", env.ENV.WebUrl)
+func getRedirectURI() string {
+	return fmt.Sprintf("%s/redirect/spotify", "")
+	//return fmt.Sprintf("%s/redirect/spotify", env.ENV.WebUrl)
 }
- 
-func getAuth() spotify.Authenticator{
+
+func getAuth() spotify.Authenticator {
 	return spotify.NewAuthenticator(redirectURI(), scopes...)
 }
 
@@ -36,22 +34,22 @@ type Spotify struct {
 	gorm.Model
 	ConnectionID *uint
 	Connection   *Connection
-	Service Service `gorm:"polymorphic:Owner;"`
+	Service      Service `gorm:"polymorphic:Owner;"`
 }
 
 type Token struct {
 	gorm.Model
-	AccessToken string 
-	TokenType string 
-	RefreshToken string 
-	Expiry time.Time 
-	UserID uint
-  	User  User
+	AccessToken  string
+	TokenType    string
+	RefreshToken string
+	Expiry       time.Time
+	UserID       uint
+	User         User
 }
 
 type addToPlaylistData struct {
-	PlaylistId string   `json:"PlaylistId"`
-	TrackId   string `json:"TrackId"`
+	PlaylistId string `json:"PlaylistId"`
+	TrackId    string `json:"TrackId"`
 }
 
 func (sp *Spotify) String() string {
@@ -59,27 +57,26 @@ func (sp *Spotify) String() string {
 }
 
 // Database methods
-func (ldb *LegatoDB) NewSpotifyToken(UserID uint, token Token) error{
+func (ldb *LegatoDB) NewSpotifyToken(UserID uint, token Token) error {
 	token.UserID = UserID
 	err := ldb.db.Create(&token).Error
-	if err!=nil {
+	if err != nil {
 		return err
 	}
 	return nil
 }
 
-
-func (ldb *LegatoDB) GetSpotifyTokenByConnectionID(cid int) (cData string, err error){
+func (ldb *LegatoDB) GetSpotifyTokenByConnectionID(cid int) (cData string, err error) {
 	var connection Connection
 	err = ldb.db.First(&connection, cid).Error
-	if err!=nil{
+	if err != nil {
 		return "", err
 	}
 	return connection.Data, nil
 }
 
 func (ldb *LegatoDB) CreateSpotify(s *Scenario, spotify Spotify) (*Spotify, error) {
-	
+
 	spotify.Service.UserID = s.UserID
 	spotify.Service.ScenarioID = &s.ID
 	ldb.db.Create(&spotify)
@@ -87,7 +84,6 @@ func (ldb *LegatoDB) CreateSpotify(s *Scenario, spotify Spotify) (*Spotify, erro
 
 	return &spotify, nil
 }
-
 
 func (ldb *LegatoDB) UpdateSpotify(s *Scenario, servId uint, nsp Spotify) error {
 	var serv Service
@@ -115,7 +111,6 @@ func (ldb *LegatoDB) UpdateSpotify(s *Scenario, servId uint, nsp Spotify) error 
 	return nil
 }
 
-
 func (ldb *LegatoDB) GetSpotifyByService(serv Service) (*Spotify, error) {
 	var t Spotify
 	err := ldb.db.Where("id = ?", serv.OwnerID).Preload("Service").Find(&t).Error
@@ -140,7 +135,7 @@ func (sp Spotify) Execute(...interface{}) {
 	}
 
 	SendLogMessage("*******Starting Spotify Service*******", *sp.Service.ScenarioID, nil)
-	
+
 	logData := fmt.Sprintf("Executing type (%s) : %s\n", spotifyType, sp.Service.Name)
 	SendLogMessage(logData, *sp.Service.ScenarioID, nil)
 
@@ -154,29 +149,28 @@ func (sp Spotify) Execute(...interface{}) {
 	client := auth().NewClient(&tk)
 
 	switch sp.Service.SubType {
-		case addTrackToPlaylist:
-			var data addToPlaylistData
-			err = json.Unmarshal([]byte(sp.Service.Data), &data)
-			if err != nil {
-				log.Println(err)
-			}
-			addTrackToPlaylistHandler(&client, data)
-			break
+	case addTrackToPlaylist:
+		var data addToPlaylistData
+		err = json.Unmarshal([]byte(sp.Service.Data), &data)
+		if err != nil {
+			log.Println(err)
+		}
+		addTrackToPlaylistHandler(&client, data)
+		break
 
-		case getTopTracks:
+	case getTopTracks:
 
-			nextData = getUserTopTracksHandler(&client)
-			e, err := json.Marshal(nextData.(*spotify.FullTrackPage))
-			if err != nil {
-				fmt.Println(err)
-			}
-			SendLogMessage(string(e), *sp.Service.ScenarioID, &sp.Service.ID)
-			break
-			
-		default:
-			break
+		nextData = getUserTopTracksHandler(&client)
+		e, err := json.Marshal(nextData.(*spotify.FullTrackPage))
+		if err != nil {
+			fmt.Println(err)
+		}
+		SendLogMessage(string(e), *sp.Service.ScenarioID, &sp.Service.ID)
+		break
+
+	default:
+		break
 	}
-
 
 	sp.Next(nextData)
 }
@@ -206,26 +200,24 @@ func (sp Spotify) Next(...interface{}) {
 		}(node)
 	}
 
-	logData := fmt.Sprintf("*******End of \"%s\"*******",sp.Service.Name)
+	logData := fmt.Sprintf("*******End of \"%s\"*******", sp.Service.Name)
 	SendLogMessage(logData, *sp.Service.ScenarioID, nil)
 }
 
+func addTrackToPlaylistHandler(client *spotify.Client, data addToPlaylistData) {
 
-func addTrackToPlaylistHandler(client *spotify.Client, data addToPlaylistData){
-	
 	_, err := client.AddTracksToPlaylist(spotify.ID(data.PlaylistId), spotify.ID(data.TrackId))
-	if err!= nil{
+	if err != nil {
 		fmt.Println(err)
 	}
 }
 
-func getUserTopTracksHandler(client *spotify.Client) *spotify.FullTrackPage{
+func getUserTopTracksHandler(client *spotify.Client) *spotify.FullTrackPage {
 	list, _ := client.CurrentUsersTopTracks()
 	return list
 }
 
-
-func DbTokenToOauth2(token Token) oauth2.Token{
+func DbTokenToOauth2(token Token) oauth2.Token {
 	tk := oauth2.Token{}
 	tk.AccessToken = token.AccessToken
 	tk.RefreshToken = token.RefreshToken

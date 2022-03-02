@@ -1,11 +1,8 @@
 package router
 
 import (
-	"fmt"
-	"legato_server/domain"
-	"legato_server/middleware"
-
 	"github.com/gin-gonic/gin"
+	"legato_server/domain"
 )
 
 const API = "api"
@@ -59,7 +56,7 @@ type Resolver struct {
 	TelegramUseCase domain.TelegramUseCase
 	SpotifyUseCase  domain.SpotifyUseCase
 	SshUseCase      domain.SshUseCase
-	LoggerUseCase	domain.LoggerUseCase
+	LoggerUseCase   domain.LoggerUseCase
 	GmailUseCase    domain.GmailUseCase
 	ToolBoxUseCase  domain.ToolBoxUseCase
 	GithubUseCase   domain.GitUseCase
@@ -71,8 +68,6 @@ var resolvers *Resolver
 
 // Use all of your scenarios for the server here in legatoRoutesGroups
 var legatoRoutesGroups = routeGroups{
-	initialRG,
-	authRG,
 	scenarioRG,
 	webhookRG,
 	nodeRG,
@@ -83,42 +78,4 @@ var legatoRoutesGroups = routeGroups{
 	logRG,
 	GitRG,
 	discordRG,
-}
-
-// NewRouter get the resolvers and create *gin.Engine that can handle all
-// of the request and responses.
-func NewRouter(res *Resolver) *gin.Engine {
-	resolvers = res
-
-	r := gin.Default()
-
-	// Setup middlewares
-	r.Use(middleware.AuthMiddleware(&resolvers.UserUseCase))
-	r.Use(middleware.CORSMiddleware())
-
-	for _, routers := range legatoRoutesGroups {
-		for _, route := range routers.routes {
-			pattern := fmt.Sprintf("/%s/%s", API, route.pattern)
-
-			switch route.method {
-			case GET:
-				r.GET(pattern, route.handlerFunc)
-				break
-			case PATCH:
-				r.PATCH(pattern, route.handlerFunc)
-				break
-			case POST:
-				r.POST(pattern, route.handlerFunc)
-				break
-			case PUT:
-				r.PUT(pattern, route.handlerFunc)
-				break
-			case DELETE:
-				r.DELETE(pattern, route.handlerFunc)
-				break
-			}
-		}
-	}
-
-	return r
 }

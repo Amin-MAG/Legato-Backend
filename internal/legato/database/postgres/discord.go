@@ -1,12 +1,10 @@
-package legatoDb
+package postgres
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
 	"gorm.io/gorm"
-	"legato_server/env"
-	"log"
 )
 
 const discordType = "discords"
@@ -106,10 +104,11 @@ func (d Discord) Execute(...interface{}) {
 		return
 	}
 
-
 	log.Printf("Executing type (%s) : %s\n", discordType, d.Service.Name)
 
-	token := env.ENV.DiscordBotToken
+	// TODO:
+	token := ""
+	//token := env.ENV.DiscordBotToken
 	switch d.Service.SubType {
 	case discordSendMessage:
 		var data discordSendMessageData

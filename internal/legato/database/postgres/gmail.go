@@ -1,10 +1,9 @@
-package legatoDb
+package postgres
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/smtp"
 
 	"gorm.io/gorm"
@@ -149,7 +148,7 @@ func (g Gmail) Execute(...interface{}) {
 		if err != nil {
 			log.Print(err)
 		}
-		
+
 		// send log
 		logData := fmt.Sprintf("Sending email from: (%s)  to: %s\n", data.EmailFrom, data.To)
 		SendLogMessage(logData, *g.Service.ScenarioID, nil)

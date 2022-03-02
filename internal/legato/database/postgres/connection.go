@@ -1,7 +1,8 @@
-package legatoDb
+package postgres
 
 import (
 	"fmt"
+	"legato_server/internal/legato/database/models"
 
 	"gorm.io/gorm"
 )
@@ -29,7 +30,7 @@ func (ldb *LegatoDB) GetUserConnections(u *User) ([]Connection, error) {
 	return connections, nil
 }
 
-func (ldb *LegatoDB) GetUserConnectionById(u *User, id uint) (Connection, error) {
+func (ldb *LegatoDB) GetUserConnectionById(u *models.User, id uint) (Connection, error) {
 	var con Connection
 	err := ldb.db.
 		Where(&Connection{UserID: u.ID}).

@@ -1,4 +1,4 @@
-package legatoDb
+package postgres
 
 import (
 	"bytes"
@@ -6,8 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"legato_server/env"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -115,11 +113,11 @@ func (t Telegram) Execute(...interface{}) {
 			log.Println("!! CRITICAL ERROR !!", err)
 		}
 
-		if env.ENV.Mode == env.DEVELOPMENT {
-			_, err = makeHttpRequest(fmt.Sprintf(sendMessageEndpoint, t.Key), "post", []byte(t.Service.Data), nil, t.Service.ScenarioID, &t.Service.ID)
-		} else {
-			_, err = makeTorifiedHttpRequest(fmt.Sprintf(sendMessageEndpoint, t.Key), "post", []byte(t.Service.Data), t.Service.ScenarioID, &t.Service.ID)
-		}
+		//if env.ENV.Mode == env.DEVELOPMENT {
+		_, err = makeHttpRequest(fmt.Sprintf(sendMessageEndpoint, t.Key), "post", []byte(t.Service.Data), nil, t.Service.ScenarioID, &t.Service.ID)
+		//} else {
+		//	_, err = makeTorifiedHttpRequest(fmt.Sprintf(sendMessageEndpoint, t.Key), "post", []byte(t.Service.Data), t.Service.ScenarioID, &t.Service.ID)
+		//}
 
 		if err != nil {
 			log.Println("!! CRITICAL ERROR !!", err)
@@ -132,11 +130,11 @@ func (t Telegram) Execute(...interface{}) {
 			log.Println("!! CRITICAL ERROR !!", err)
 		}
 
-		if env.ENV.Mode == env.DEVELOPMENT {
-			_, err = makeHttpRequest(fmt.Sprintf(getChatMemberEndpoint, t.Key), "post", []byte(t.Service.Data), nil, t.Service.ScenarioID, &t.Service.ID)
-		} else {
-			_, err = makeTorifiedHttpRequest(fmt.Sprintf(getChatMemberEndpoint, t.Key), "post", []byte(t.Service.Data), t.Service.ScenarioID, &t.Service.ID)
-		}
+		//if env.ENV.Mode == env.DEVELOPMENT {
+		_, err = makeHttpRequest(fmt.Sprintf(getChatMemberEndpoint, t.Key), "post", []byte(t.Service.Data), nil, t.Service.ScenarioID, &t.Service.ID)
+		//} else {
+		//	_, err = makeTorifiedHttpRequest(fmt.Sprintf(getChatMemberEndpoint, t.Key), "post", []byte(t.Service.Data), t.Service.ScenarioID, &t.Service.ID)
+		//}
 
 		if err != nil {
 			log.Println("!! CRITICAL ERROR !!", err)

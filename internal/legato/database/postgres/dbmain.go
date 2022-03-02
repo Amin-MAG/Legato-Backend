@@ -1,9 +1,10 @@
-package legatoDb
+package postgres
 
 import (
 	"fmt"
-	"legato_server/env"
-	"log"
+	"legato_server/config"
+	"legato_server/internal/legato/database"
+	"legato_server/pkg/logger"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -15,31 +16,30 @@ type LegatoDB struct {
 
 var legatoDb LegatoDB
 
-func Connect() (*LegatoDB, error) {
-	config := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
-		env.ENV.DatabaseHost,
-		env.ENV.DatabasePort,
-		env.ENV.DatabaseUsername,
-		env.ENV.DatabaseName,
-		env.ENV.DatabasePassword,
+var log, _ = logger.NewLogger(logger.Config{})
+
+func NewPostgresDatabase(cfg *config.Config) (database.Database, error) {
+	databaseConf := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
+		cfg.Database.Host,
+		cfg.Database.Port,
+		cfg.Database.Username,
+		cfg.Database.DatabaseName,
+		cfg.Database.Password,
 	)
 
-	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(databaseConf), &gorm.Config{})
 	if err != nil {
-		log.Println("Error in connecting to the postgres database")
+		log.Warn("Error in connecting to the postgres database")
 		log.Fatal(err)
 	}
 
-	// AddWebhookToScenario LegatoDB instance
-	//defer db.Close() // TODO: what should happen to this?
 	legatoDb.db = db
 
-	// Call createSchema to create all of our tables
+	log.Info("Creating schema...")
 	err = createSchema(legatoDb.db)
 	if err != nil {
 		return nil, err
 	}
-	log.Println("Connected to the database and created the tables")
 
 	return &legatoDb, nil
 }

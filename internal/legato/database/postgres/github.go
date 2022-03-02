@@ -1,12 +1,10 @@
-package legatoDb
+package postgres
 
 import (
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
-
 	"github.com/google/go-github/github"
 	"golang.org/x/oauth2"
 	githubOAuth "golang.org/x/oauth2/github"

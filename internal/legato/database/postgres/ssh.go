@@ -1,11 +1,10 @@
-package legatoDb
+package postgres
 
 import (
 	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"reflect"
 	"strings"
 

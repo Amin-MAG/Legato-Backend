@@ -1,11 +1,10 @@
-package legatoDb
+package postgres
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
 	"gorm.io/gorm"
-	"log"
 	"time"
 )
 
@@ -92,11 +91,10 @@ func (t ToolBox) Execute(...interface{}) {
 	}
 
 	SendLogMessage("*******Starting Toolbox Service*******", *t.Service.ScenarioID, nil)
-	
+
 	logData := fmt.Sprintf("Executing type (%s) : %s\n", toolBoxType, t.Service.Name)
 	SendLogMessage(logData, *t.Service.ScenarioID, &t.Service.ID)
 
-	
 	switch t.Service.SubType {
 	case toolBoxSleep:
 		var data toolBoxSleepData

@@ -1,12 +1,9 @@
-package legatoDb
+package postgres
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"legato_server/env"
-	"log"
-
 	uuid "github.com/satori/go.uuid"
 	"gorm.io/gorm"
 )
@@ -15,11 +12,11 @@ const webhookType string = "webhooks"
 
 type Webhook struct {
 	gorm.Model
-	Token    uuid.UUID
-	IsEnable bool    `gorm:"default:False"`
-	Service  Service `gorm:"polymorphic:Owner;"`
-	GetMethod bool	 
-	GetHeaders bool  
+	Token      uuid.UUID
+	IsEnable   bool    `gorm:"default:False"`
+	Service    Service `gorm:"polymorphic:Owner;"`
+	GetMethod  bool
+	GetHeaders bool
 }
 
 func (w *Webhook) String() string {
@@ -33,7 +30,8 @@ func (w *Webhook) BeforeCreate(tx *gorm.DB) (err error) {
 }
 
 func (w *Webhook) GetURL() string {
-	return fmt.Sprintf("%s/api/services/webhook/%v", env.ENV.WebUrl, w.Token)
+	return fmt.Sprintf("%s/api/services/webhook/%v", "", w.Token)
+	//return fmt.Sprintf("%s/api/services/webhook/%v", env.ENV.WebUrl, w.Token)
 }
 
 func (ldb *LegatoDB) CreateWebhookForScenario(s *Scenario, wh Webhook) (*Webhook, error) {
@@ -86,7 +84,6 @@ func (ldb *LegatoDB) UpdateWebhook(s *Scenario, servId uint, nwh Webhook) error 
 
 	ldb.db.Model(&serv).Updates(nwh.Service)
 	ldb.db.Model(&wh).Updates(nwh)
-
 
 	return nil
 }
@@ -148,12 +145,12 @@ func (ldb *LegatoDB) GetUserWebhooks(u *User) ([]Webhook, error) {
 	var s []int
 	var webhooks []Webhook
 	err := ldb.db.Model(&Service{}).Where("user_id", u.ID).Where("owner_type", webhookType).Pluck("owner_id", &s).Error
-	if len(s) == 0{
+	if len(s) == 0 {
 		return webhooks, nil
 	}
 	err = ldb.db.Preload("Service").Find(&webhooks, s).Error
-	
-	if err != nil || len(webhooks) == 0{
+
+	if err != nil || len(webhooks) == 0 {
 		return nil, err
 	}
 	return webhooks, nil
@@ -185,12 +182,11 @@ func (ldb *LegatoDB) DeleteSeparateWebhookById(u *User, wid uint) error {
 		return errors.New("the webhook service is not existed")
 	}
 	// if webhook was not deleted in scenario
-	if wh.Service.ID != 0{
+	if wh.Service.ID != 0 {
 		if wh.Service.UserID != u.ID {
 			return errors.New("the webhook service is not for this user")
 		}
 	}
-
 
 	ldb.db.Delete(&wh)
 	ldb.db.Delete(&wh.Service)
@@ -211,7 +207,7 @@ func (w Webhook) Execute(...interface{}) {
 
 	logData := fmt.Sprintf("Executing type (%s) : %s\n", webhookType, w.Service.Name)
 	SendLogMessage(logData, *w.Service.ScenarioID, nil)
-	
+
 	w.IsEnable = true
 	legatoDb.db.Save(&w)
 
@@ -240,7 +236,6 @@ func (w Webhook) Next(data ...interface{}) {
 	payloadJson, _ := json.Marshal(webhookData)
 	SendLogMessage(string(payloadJson), *w.Service.ScenarioID, &w.Service.ID)
 
-
 	logData = fmt.Sprintf("Executing \"%s\" Children \n", w.Service.Name)
 	SendLogMessage(logData, *w.Service.ScenarioID, &w.Service.ID)
 
@@ -261,11 +256,10 @@ func (w Webhook) Next(data ...interface{}) {
 
 }
 
-
 func (ldb *LegatoDB) GetWebhookHistoryLogsById(u *User, wid uint) (logs []ServiceLog, err error) {
 	var wdb Webhook
 	err = ldb.db.Where("id = ?", wid).Preload("Service").Find(&wdb).Error
-	if err != nil || wdb.ID == 0{
+	if err != nil || wdb.ID == 0 {
 		return nil, errors.New("no webhook exists with given id")
 	}
 	err = ldb.db.Where(&ServiceLog{ServiceID: uint(wdb.Service.ID)}).Preload("Service").Preload("Messages", "message_type = ?", "json").Find(&logs).Error

@@ -1,4 +1,4 @@
-package legatoDb
+package postgres
 
 import (
 	"bytes"
@@ -7,9 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"legato_server/api"
-	"legato_server/env"
 	"legato_server/services"
-	"log"
 	"net/http"
 	"time"
 
@@ -195,7 +193,8 @@ func (s Scenario) Schedule(scheduleToken []byte) error {
 			Token:         scheduleToken,
 		}
 		// Make http request to enqueue this job
-		schedulerUrl := fmt.Sprintf("%s/api/schedule/scenario/%d", env.ENV.SchedulerUrl, s.ID)
+		schedulerUrl := fmt.Sprintf("%s/api/schedule/scenario/%d", "", s.ID)
+		//schedulerUrl := fmt.Sprintf("%s/api/schedule/scenario/%d", env.ENV.SchedulerUrl, s.ID)
 		body, err := json.Marshal(schedule)
 		if err != nil {
 			return err

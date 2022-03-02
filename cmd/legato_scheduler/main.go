@@ -1,17 +1,27 @@
 package main
 
 import (
-	"legato_server/env"
+	"fmt"
+	"github.com/ilyakaznacheev/cleanenv"
+	"legato_server/config"
+	"legato_server/pkg/logger"
 	"legato_server/scheduler"
-	"log"
 	"time"
 )
 
+var log, _ = logger.NewLogger(logger.Config{})
+
 func init() {
 	// Load environment variables
-	env.LoadEnv()
+	log.Info("Reading environment variables...")
+	var cfg config.Config
+	err := cleanenv.ReadEnv(&cfg)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Infof("Environment variables: %+v\n", cfg)
 
-	err := scheduler.CreateQueue(env.ENV.RedisHost)
+	err = scheduler.CreateQueue(fmt.Sprintf("%s:%s", cfg.Redis.Host, cfg.Redis.Port))
 	if err != nil {
 		panic(err)
 	}
