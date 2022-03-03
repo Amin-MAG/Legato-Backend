@@ -1,6 +1,13 @@
 package api
 
-type NewScenario struct {
+import "time"
+
+type NewScenarioRequest struct {
+	Name     string `json:"name" binding:"required"`
+	IsActive *bool  `json:"isActive" binding:"required"`
+}
+
+type UpdateScenarioRequest struct {
 	Name     string `json:"name"`
 	IsActive *bool  `json:"isActive"`
 }
@@ -18,7 +25,7 @@ type FullScenario struct {
 	ID                uint          `json:"id"`
 	Name              string        `json:"name"`
 	IsActive          *bool         `json:"isActive"`
-	LastScheduledTime string        `json:"lastScheduledTime"`
+	LastScheduledTime time.Time     `json:"lastScheduledTime"`
 	Interval          int32         `json:"interval"`
 	Services          []ServiceNode `json:"services"`
 }
@@ -28,7 +35,7 @@ type NewScenarioInterval struct {
 }
 
 type ScenarioDetail struct {
-	ID          uint     `json:"id"`
-	Name        string   `json:"name"`
-	IsActive    *bool    `json:"isActive"`
+	ID       uint   `json:"id"`
+	Name     string `json:"name"`
+	IsActive *bool  `json:"isActive"`
 }

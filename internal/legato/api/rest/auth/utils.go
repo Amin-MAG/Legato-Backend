@@ -1,19 +1,18 @@
-package router
+package auth
 
 import (
+	"github.com/gin-gonic/gin"
 	"legato_server/internal/legato/database/models"
 	"legato_server/middleware"
 	"net/http"
-
-	"github.com/gin-gonic/gin"
 )
 
-// checkAuth was written because of DRY (Don't Repeat Yourself).
+// CheckAuth was written because of DRY (Don't Repeat Yourself).
 // Each time it authenticate the user and handle the errors that might occur.
 // validUsernames is the list of usernames that the api is accessible for them.
 // nil validUsers means that any authenticated user can use api.
 // Return the logged-in user.
-func checkAuth(c *gin.Context, validUsernames []string) *models.User {
+func CheckAuth(c *gin.Context, validUsernames []string) *models.User {
 	// Get the user
 	rawData := c.MustGet(middleware.UserKey)
 	if rawData == nil {

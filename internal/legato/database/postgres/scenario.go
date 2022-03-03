@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"legato_server/api"
+	"legato_server/internal/legato/database/models"
 	"legato_server/services"
 	"net/http"
 	"time"
@@ -30,29 +31,50 @@ type Scenario struct {
 	Histories         []History
 }
 
-func (s *Scenario) String() string {
+func (s *Scenario) model() models.Scenario {
+	return models.Scenario{
+		ID:                s.ID,
+		CreatedAt:         s.CreatedAt,
+		UpdatedAt:         s.UpdatedAt,
+		UserID:            s.UserID,
+		Name:              s.Name,
+		IsActive:          s.IsActive,
+		Interval:          s.Interval,
+		LastScheduledTime: s.LastScheduledTime,
+	}
+}
+
+func (s *Scenario) string() string {
 	return fmt.Sprintf("(@Scenario: %+v)", *s)
 }
 
-func (ldb *LegatoDB) AddScenario(u *User, s *Scenario) error {
-	s.UserID = u.ID
-
-	ldb.db.Create(&s)
-	ldb.db.Save(&s)
-
-	return nil
+func (ldb *LegatoDB) AddScenario(u *models.User, s *models.Scenario) (models.Scenario, error) {
+	newScenario := Scenario{
+		UserID:            u.ID,
+		Name:              s.Name,
+		IsActive:          s.IsActive,
+		Interval:          s.Interval,
+		LastScheduledTime: s.LastScheduledTime,
+	}
+	ldb.db.Create(&newScenario)
+	return newScenario.model(), nil
 }
 
-func (ldb *LegatoDB) GetUserScenarios(u *User) ([]Scenario, error) {
+func (ldb *LegatoDB) GetUserScenarios(u *models.User) ([]models.Scenario, error) {
 	user, _ := ldb.GetUserByUsername(u.Username)
 
 	var scenarios []Scenario
 	ldb.db.Model(&user).Order("updated_at desc").Association("Scenarios").Find(&scenarios)
 
-	return scenarios, nil
+	var modelScenarios []models.Scenario
+	for _, s := range scenarios {
+		modelScenarios = append(modelScenarios, s.model())
+	}
+
+	return modelScenarios, nil
 }
 
-func (ldb *LegatoDB) GetUserScenarioById(u *User, scenarioId uint) (Scenario, error) {
+func (ldb *LegatoDB) GetUserScenarioById(u *models.User, scenarioId uint) (models.Scenario, error) {
 	var sc Scenario
 	err := ldb.db.
 		Where(&Scenario{UserID: u.ID}).
@@ -60,48 +82,51 @@ func (ldb *LegatoDB) GetUserScenarioById(u *User, scenarioId uint) (Scenario, er
 		Preload("Services").
 		Find(&sc).Error
 	if err != nil {
-		return Scenario{}, err
+		return models.Scenario{}, err
 	}
 
-	return sc, nil
+	return sc.model(), nil
 }
 
-func (ldb *LegatoDB) GetScenarioById(scenarioId uint) (Scenario, error) {
+func (ldb *LegatoDB) GetScenarioById(scenarioId uint) (models.Scenario, error) {
 	var sc Scenario
 	err := ldb.db.
 		Where("id = ?", scenarioId).
 		Preload("Services").
 		Find(&sc).Error
 	if err != nil {
-		return Scenario{}, errors.New("the scenario is not in user scenarios")
+		return models.Scenario{}, errors.New("the scenario is not in user scenarios")
 	}
 
-	return sc, nil
+	return sc.model(), nil
 }
 
-func (ldb *LegatoDB) GetScenarioByName(u *User, name string) (Scenario, error) {
+func (ldb *LegatoDB) GetScenarioByName(u *models.User, name string) (models.Scenario, error) {
 	var sc Scenario
 	err := ldb.db.Where(&Scenario{Name: name, UserID: u.ID}).Preload("RootService").Find(&sc).Error
 	if err != nil {
-		return Scenario{}, err
+		return models.Scenario{}, err
 	}
 
-	return sc, nil
+	return sc.model(), nil
 }
 
-func (ldb *LegatoDB) UpdateUserScenarioById(u *User, scenarioID uint, updatedScenario Scenario) error {
+func (ldb *LegatoDB) UpdateUserScenarioById(u *models.User, scenarioID uint, updatedScenario models.Scenario) error {
 	var scenario Scenario
 	ldb.db.Where(&Scenario{UserID: u.ID}).Where("id = ?", scenarioID).Find(&scenario)
 	if scenario.ID != scenarioID {
 		return errors.New("the scenario is not in user scenarios")
 	}
 
-	ldb.db.Model(&scenario).Updates(updatedScenario)
+	ldb.db.Model(&scenario).Updates(Scenario{
+		Name:     updatedScenario.Name,
+		IsActive: updatedScenario.IsActive,
+	})
 
 	return nil
 }
 
-func (ldb *LegatoDB) DeleteUserScenarioById(u *User, scenarioID uint) error {
+func (ldb *LegatoDB) DeleteUserScenarioById(u *models.User, scenarioID uint) error {
 	var scenario Scenario
 	ldb.db.Where(&Scenario{UserID: u.ID}).Where("id = ?", scenarioID).Find(&scenario)
 	if scenario.ID != scenarioID {

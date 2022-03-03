@@ -5,6 +5,7 @@ import (
 	"legato_server/config"
 	"legato_server/internal/legato/api/rest/auth"
 	"legato_server/internal/legato/api/rest/health"
+	"legato_server/internal/legato/api/rest/scenario"
 	"legato_server/internal/legato/api/rest/server"
 	"legato_server/internal/legato/database"
 	"legato_server/middleware"

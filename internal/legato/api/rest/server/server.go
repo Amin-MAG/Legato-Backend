@@ -36,6 +36,7 @@ func NewServer(cfg RestServerConfig) (*http.Server, error) {
 	v1 := engine.Group(ApiV1)
 	cfg.HealthModule.RegisterRoutes(v1)
 	cfg.AuthModule.RegisterRoutes(v1)
+	cfg.ScenarioModule.RegisterRoutes(v1)
 
 	// Create and return the server
 	server := &http.Server{

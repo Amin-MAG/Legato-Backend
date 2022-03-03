@@ -25,12 +25,12 @@ type User struct {
 func (u *User) model() models.User {
 	return models.User{
 		ID:        u.ID,
+		CreatedAt: u.CreatedAt,
+		UpdatedAt: u.UpdatedAt,
 		Username:  u.Username,
 		Email:     u.Email,
 		Password:  u.Password,
 		LastLogin: u.LastLogin,
-		CreatedAt: u.CreatedAt,
-		UpdatedAt: u.UpdatedAt,
 	}
 }
 

@@ -4,13 +4,17 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
-	"legato_server/api"
 	"legato_server/internal/legato/database/models"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/crypto/bcrypt"
 )
+
+type LoginCredentials struct {
+	Username string
+	Password string
+}
 
 // Claims
 type Claims struct {
@@ -42,7 +46,7 @@ func GenerateRandomKey() []byte {
 // Login check input details with database.
 // If everything was ok then it creates JWT token.
 // Returns JWT token
-func Login(cred api.UserCredential, user models.User) (t Token, e error) {
+func Login(cred LoginCredentials, user models.User) (t Token, e error) {
 
 	// Check Password
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(cred.Password))
