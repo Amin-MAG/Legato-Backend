@@ -1,99 +1,51 @@
 package main
 
 import (
-	"legato_server/authenticate"
-	legatoDb "legato_server/db"
-	"legato_server/domain"
-	"legato_server/env"
-	"legato_server/logging"
-	"legato_server/router"
-	scenarioUC "legato_server/scenario/usecase"
-	discordUC "legato_server/services/discord"
-	githubUC "legato_server/services/github"
-	gmailUC "legato_server/services/gmail"
-	httpUC "legato_server/services/http"
-	spotifyUC "legato_server/services/spotify"
-	sshUC "legato_server/services/ssh"
-	telegramUC "legato_server/services/telegram"
-	toolboxUC "legato_server/services/toolbox"
-	serviceUC "legato_server/services/usecase"
-	webhookUC "legato_server/services/webhook"
-	userUC "legato_server/user/usecase"
-	logUC  "legato_server/logging/usecase"
-
-	"time"
-
-	"github.com/spf13/viper"
+	"github.com/ilyakaznacheev/cleanenv"
+	"legato_server/config"
+	"legato_server/internal/legato/api/rest"
+	"legato_server/internal/legato/database/postgres"
+	"legato_server/pkg/logger"
 )
 
-var userUseCase domain.UserUseCase
-var scenarioUseCase domain.ScenarioUseCase
-var serviceUseCase domain.ServiceUseCase
-var webhookUseCase domain.WebhookUseCase
-var httpUseCase domain.HttpUseCase
-var telegramUseCase domain.TelegramUseCase
-var spotifyUseCase domain.SpotifyUseCase
-var sshUseCase domain.SshUseCase
-var loggerUseCase domain.LoggerUseCase
-var gmailUseCase domain.GmailUseCase
-var githubUseCase domain.GitUseCase
-var discordUseCase domain.DiscordUseCase
-var toolBoxUseCase domain.ToolBoxUseCase
+var log, _ = logger.NewLogger(logger.Config{})
 
 func init() {
-	// Load environment variables
-	env.LoadEnv()
-
-	// Generate random jwt key
-	authenticate.GenerateRandomKey()
-	
-	// Make server sent event 
-	logging.SSE.Init()
-
-	// Connect to database
-	appDB, err := legatoDb.Connect()
-	if err != nil {
-		panic(err)
-	}
-
-	timeoutContext := time.Duration(viper.GetInt("context.timeout")) * time.Second
-
-	// Use Cases
-	userUseCase = userUC.NewUserUseCase(appDB, timeoutContext)
-	scenarioUseCase = scenarioUC.NewScenarioUseCase(appDB, timeoutContext)
-	serviceUseCase = serviceUC.NewServiceUseCase(appDB, timeoutContext)
-	webhookUseCase = webhookUC.NewWebhookUseCase(appDB, timeoutContext)
-	httpUseCase = httpUC.NewHttpUseCase(appDB, timeoutContext)
-	telegramUseCase = telegramUC.NewTelegramUseCase(appDB, timeoutContext)
-	spotifyUseCase = spotifyUC.NewSpotifyUseCase(appDB, timeoutContext)
-	loggerUseCase = logUC.NewLoggerUseCase(appDB, timeoutContext)
-	sshUseCase = sshUC.NewSshUseCase(appDB, timeoutContext)
-	gmailUseCase = gmailUC.NewGmailUseCase(appDB, timeoutContext)
-	githubUseCase = githubUC.NewGithubUseCase(appDB, timeoutContext)
-	discordUseCase = discordUC.NewDiscordUseCase(appDB, timeoutContext)
-	toolBoxUseCase = toolboxUC.NewToolBoxUseCase(appDB, timeoutContext)
-
-	// Defaults
-	_ = userUseCase.CreateDefaultUser()
+	log.Info("Initializing Legato Server...")
 }
 
 func main() {
-	// resolvers include all of our use cases
-	resolvers := router.Resolver{
-		UserUseCase:     userUseCase,
-		ScenarioUseCase: scenarioUseCase,
-		ServiceUseCase:  serviceUseCase,
-		WebhookUseCase:  webhookUseCase,
-		HttpUserCase:    httpUseCase,
-		TelegramUseCase: telegramUseCase,
-		SpotifyUseCase:  spotifyUseCase,
-		SshUseCase:      sshUseCase,
-		LoggerUseCase:   loggerUseCase,
-		GmailUseCase:    gmailUseCase,
-		GithubUseCase:   githubUseCase,
-		DiscordUseCase:  discordUseCase,
-		ToolBoxUseCase:  toolBoxUseCase,
+	// Read environment variables
+	log.Info("Reading environment variables...")
+	var cfg config.Config
+	err := cleanenv.ReadEnv(&cfg)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Infof("Environment variables: %+v\n", cfg)
+
+	//// Generate random jwt key
+	//authenticate.GenerateRandomKey()
+	//
+	//// Make server sent event
+	//logging.SSE.Init()
+
+	// Database
+	log.Infof("Create Connection to the datbase...")
+	db, err := postgres.NewPostgresDatabase(&cfg)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Info("Connected to the database")
+
+	// API Server
+	log.Info("Creating new Legato Rest API server...")
+	apiServer, err := rest.NewApiServer(db, &cfg)
+	if err != nil {
+		log.Fatalln(err)
 	}
 
-	_ = router.NewRouter(&resolvers).Run()
+	// Running Server
+	log.Infof("Serving on %s ...", cfg.Legato.ServingPort)
+	log.Fatalln(apiServer.ListenAndServe().Error())
 }

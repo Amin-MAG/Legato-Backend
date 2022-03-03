@@ -30,9 +30,16 @@ func NewApiServer(db database.Database, cfg *config.Config) (*http.Server, error
 		return nil, err
 	}
 
+	// Create scenario module
+	scenarioMod, err := scenario.NewScenarioModule(db)
+	if err != nil {
+		return nil, err
+	}
+
 	return server.NewServer(server.RestServerConfig{
-		HealthModule: healthMod,
-		AuthModule:   authMod,
+		HealthModule:   healthMod,
+		AuthModule:     authMod,
+		ScenarioModule: scenarioMod,
 		Middlewares: []middleware.GinMiddleware{
 			middleware.NewCORSMiddleware(),
 			middleware.NewAuthMiddleware(db),

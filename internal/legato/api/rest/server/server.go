@@ -14,10 +14,11 @@ type RestModule interface {
 }
 
 type RestServerConfig struct {
-	HealthModule RestModule
-	AuthModule   RestModule
-	Middlewares  []middleware.GinMiddleware
-	ServingPort  string
+	HealthModule   RestModule
+	AuthModule     RestModule
+	ScenarioModule RestModule
+	Middlewares    []middleware.GinMiddleware
+	ServingPort    string
 }
 
 // NewServer

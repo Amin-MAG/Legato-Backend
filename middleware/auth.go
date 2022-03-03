@@ -2,7 +2,8 @@ package middleware
 
 import (
 	"legato_server/authenticate"
-	"legato_server/domain"
+	"legato_server/internal/legato/database"
+	"legato_server/pkg/logger"
 
 	"github.com/gin-gonic/gin"
 )
@@ -10,7 +11,17 @@ import (
 const Authorization = "Authorization"
 const UserKey = "UserKey"
 
-func AuthMiddleware(u *domain.UserUseCase) gin.HandlerFunc {
+var log, _ = logger.NewLogger(logger.Config{})
+
+type AuthMiddleware struct {
+	db database.Database
+}
+
+func NewAuthMiddleware(db database.Database) GinMiddleware {
+	return &AuthMiddleware{db: db}
+}
+
+func (am *AuthMiddleware) Middleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := c.GetHeader(Authorization)
 
@@ -29,8 +40,8 @@ func AuthMiddleware(u *domain.UserUseCase) gin.HandlerFunc {
 			return
 		}
 
-		// Get user and check if the user exists in db
-		user, err := (*u).GetUserByUsername(claim.Username)
+		// Get user and check if the user exists in postgres
+		user, err := am.db.GetUserByUsername(claim.Username)
 		if err != nil {
 			c.Set(UserKey, nil)
 			c.Next()

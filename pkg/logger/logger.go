@@ -57,7 +57,8 @@ type Logger struct {
 func NewLogger(config Config) (*Logger, error) {
 	// Create new Logrus logger
 	ll := logrus.New()
-	ll.SetLevel(logrus.InfoLevel)
+	// TODO: Make this log level env
+	ll.SetLevel(logrus.DebugLevel)
 	ll.SetFormatter(&logrus.TextFormatter{
 		ForceColors:     true,
 		TimestampFormat: iso8601DateFormat,
@@ -75,7 +76,7 @@ func NewLogger(config Config) (*Logger, error) {
 		// For checking storage limitation
 		ll.AddHook(NewFileThresholdHook(*config.OutputFileConfig))
 	}
-	ll.Infof("Ther logger has been created: %+v\n", config)
+	ll.Debugf("Ther logger has been created: %+v\n", config)
 
 	return &Logger{
 		ll,
