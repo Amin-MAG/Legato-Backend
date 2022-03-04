@@ -1,13 +1,13 @@
 package scenario
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
-	"legato_server/api"
 	"legato_server/internal/legato/api/rest/auth"
 	"legato_server/internal/legato/api/rest/server"
 	"legato_server/internal/legato/database"
 	"legato_server/internal/legato/database/models"
+	"legato_server/internal/legato/services"
+	"log"
 	"net/http"
 	"strconv"
 )
@@ -22,7 +22,7 @@ func (s *Scenario) RegisterRoutes(group *gin.RouterGroup) {
 	group.PUT("/users/:username/scenarios/:scenario_id", s.UpdateScenario)
 	group.GET("/users/:username/scenarios/:scenario_id", s.GetScenarioDetail)
 	group.DELETE("/users/:username/scenarios/:scenario_id", s.DeleteScenario)
-	//group.PATCH("/users/:username/scenarios/:scenario_id", s.StartScenario)
+	group.PATCH("/users/:username/scenarios/:scenario_id", s.StartScenario)
 	//group.POST("/users/:username/scenarios/:scenario_id/schedule", s.ScheduleScenario)
 	//group.PUT("/users/:username/scenarios/:scenario_id/set-interval", s.SetScenarioInterval)
 	//// For test purpose
@@ -39,11 +39,12 @@ func (s *Scenario) AddScenario(c *gin.Context) {
 	}
 
 	// Validate JSON
-	newScenario := api.NewScenarioRequest{}
+	newScenario := NewScenarioRequest{}
 	err := c.ShouldBindJSON(&newScenario)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
+			"message": "can not create this scenario",
+			"error":   err.Error(),
 		})
 		return
 	}
@@ -55,7 +56,8 @@ func (s *Scenario) AddScenario(c *gin.Context) {
 	})
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
+			"message": "can not create this scenario",
+			"error":   err.Error(),
 		})
 		return
 	}
@@ -86,7 +88,8 @@ func (s *Scenario) GetUserScenarios(c *gin.Context) {
 	userScenarios, err := s.db.GetUserScenarios(loginUser)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": fmt.Sprintf("can not fetch user scenarios: %s", err),
+			"message": "can not fetch user scenarios",
+			"error":   err.Error(),
 		})
 		return
 	}
@@ -122,13 +125,14 @@ func (s *Scenario) GetScenarioDetail(c *gin.Context) {
 	selectedScenario, err := s.db.GetUserScenarioById(loginUser, uint(scenarioId))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": fmt.Sprintf("can not fetch this scenario: %s", err),
+			"message": "can not fetch this scenario",
+			"error":   err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"scenario": api.FullScenario{
+		"scenario": FullScenarioResponse{
 			ID:                selectedScenario.ID,
 			Name:              selectedScenario.Name,
 			IsActive:          selectedScenario.IsActive,
@@ -149,11 +153,12 @@ func (s *Scenario) UpdateScenario(c *gin.Context) {
 	}
 
 	// Validate JSON
-	updatedScenario := api.UpdateScenarioRequest{}
+	updatedScenario := UpdateScenarioRequest{}
 	err := c.BindJSON(&updatedScenario)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
+			"message": "can not update this scenario",
+			"error":   err.Error(),
 		})
 		return
 	}
@@ -165,7 +170,8 @@ func (s *Scenario) UpdateScenario(c *gin.Context) {
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": fmt.Sprintf("can not update this scenario: %s", err),
+			"message": "can not update this scenario",
+			"error":   err.Error(),
 		})
 		return
 	}
@@ -173,7 +179,8 @@ func (s *Scenario) UpdateScenario(c *gin.Context) {
 	scenario, err := s.db.GetUserScenarioById(loginUser, uint(scenarioId))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": fmt.Sprintf("can not fetch this scenario: %s", err),
+			"message": "can not fetch this scenario",
+			"error":   err.Error(),
 		})
 		return
 	}
@@ -198,7 +205,8 @@ func (s *Scenario) DeleteScenario(c *gin.Context) {
 	err := s.db.DeleteUserScenarioById(loginUser, uint(scenarioId))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": fmt.Sprintf("can not delete this scenario: %s", err),
+			"message": "can not delete this scenario",
+			"error":   err.Error(),
 		})
 		return
 	}
@@ -208,31 +216,52 @@ func (s *Scenario) DeleteScenario(c *gin.Context) {
 	})
 }
 
-//
-//func (s *Scenario) StartScenario(c *gin.Context) {
-//	username := c.Param("username")
-//	scenarioId, _ := strconv.Atoi(c.Param("scenario_id"))
-//
-//	// Auth
-//	loginUser := auth.CheckAuth(c, []string{username})
-//	if loginUser == nil {
-//		return
-//	}
-//
-//	// Start that scenario
-//	err := resolvers.ScenarioUseCase.StartScenarioInstantly(loginUser, uint(scenarioId))
-//	if err != nil {
-//		c.JSON(http.StatusInternalServerError, gin.H{
-//			"message": fmt.Sprintf("can not start this scenario: %s", err),
-//		})
-//		return
-//	}
-//
-//	c.JSON(http.StatusOK, gin.H{
-//		"message": "scenario is started successfully",
-//	})
-//}
-//
+func (s *Scenario) StartScenario(c *gin.Context) {
+	username := c.Param("username")
+	scenarioIdParam, _ := strconv.Atoi(c.Param("scenario_id"))
+	scenarioId := uint(scenarioIdParam)
+
+	// Auth
+	loggedInUser := auth.CheckAuth(c, []string{username})
+	if loggedInUser == nil {
+		return
+	}
+
+	scenario, err := s.db.GetUserScenarioById(loggedInUser, scenarioId)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "can not find this scenario",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	// Start that scenario
+	log.Println("Preparing scenario to start")
+	rootServiceModels, err := s.db.GetScenarioRootServices(scenario)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "can not prepare this scenario",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	pipeline, err := services.NewPipeline(&s.db, rootServiceModels)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "can not start this scenario",
+			"error":   err.Error(),
+		})
+		return
+	}
+	pipeline.Start()
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "scenario is started successfully",
+	})
+}
+
 //func (s *Scenario) ForceStartScenario(c *gin.Context) {
 //	scenarioId, _ := strconv.Atoi(c.Param("scenario_id"))
 //

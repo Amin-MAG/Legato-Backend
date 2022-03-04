@@ -3,7 +3,6 @@ package node
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"legato_server/api"
 	"legato_server/internal/legato/api/rest/auth"
 	"legato_server/internal/legato/api/rest/server"
 	"legato_server/internal/legato/database"
@@ -71,16 +70,15 @@ func (n *Node) GetNodesChildren(c *gin.Context) {
 	}
 
 	// Convert to Response model
-	var nodesResponse []api.ServiceNode
+	var nodesResponse []ServiceNodeResponse
 	for _, srv := range nodesChildren {
-		log.Warnf("%+v", srv.Children)
-		nodesResponse = append(nodesResponse, api.ServiceNode{
+		nodesResponse = append(nodesResponse, ServiceNodeResponse{
 			Id:       srv.ID,
 			ParentId: srv.ParentID,
 			Name:     srv.Name,
 			Type:     srv.Type,
 			SubType:  &(srv.SubType),
-			Position: api.Position{
+			Position: Position{
 				X: srv.PosX,
 				Y: srv.PosY,
 			},
@@ -131,16 +129,15 @@ func (n *Node) GetScenarioNodes(c *gin.Context) {
 	}
 
 	// Convert to Response model
-	var nodesResponse []api.ServiceNode
+	var nodesResponse []ServiceNodeResponse
 	for _, srv := range services {
-		log.Warnf("%+v", srv.Children)
-		nodesResponse = append(nodesResponse, api.ServiceNode{
+		nodesResponse = append(nodesResponse, ServiceNodeResponse{
 			Id:       srv.ID,
 			ParentId: srv.ParentID,
 			Name:     srv.Name,
 			Type:     srv.Type,
 			SubType:  &(srv.SubType),
-			Position: api.Position{
+			Position: Position{
 				X: srv.PosX,
 				Y: srv.PosY,
 			},
@@ -165,7 +162,7 @@ func (n *Node) AddNode(c *gin.Context) {
 	}
 
 	// Validate JSON
-	newNode := api.NewServiceNode{}
+	newNode := NewServiceNodeRequest{}
 	if err := c.ShouldBindJSON(&newNode); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "can not create this scenario",
@@ -177,7 +174,7 @@ func (n *Node) AddNode(c *gin.Context) {
 	// Service Switch
 	// NOTE: handle other non-service state
 	var err error
-	var addedServ api.ServiceNode
+	var addedServ ServiceNodeResponse
 	switch newNode.Type {
 	//case "webhooks":
 	//	addedServ, err = resolvers.WebhookUseCase.AddWebhookToScenario(loggedInUser, uint(scenarioId), newNode)
@@ -208,13 +205,13 @@ func (n *Node) AddNode(c *gin.Context) {
 			return
 		}
 
-		addedServ = api.ServiceNode{
+		addedServ = ServiceNodeResponse{
 			Id:       addedHttpService.ID,
 			ParentId: addedHttpService.ParentID,
 			Name:     addedHttpService.Name,
 			Type:     addedHttpService.Type,
 			SubType:  &(addedHttpService.SubType),
-			Position: api.Position{
+			Position: Position{
 				X: addedHttpService.PosX,
 				Y: addedHttpService.PosY,
 			},
@@ -265,7 +262,7 @@ func (n *Node) AddNode(c *gin.Context) {
 	})
 }
 
-//func (w *HttpUseCase) Update(u *api.UserInfo, scenarioId uint, serviceId uint, nh api.NewServiceNode) error {
+//func (w *HttpUseCase) Update(u *api.UserInfo, scenarioId uint, serviceId uint, nh api.NewServiceNodeRequest) error {
 //	user, err := w.db.GetUserByUsername(u.Username)
 //	if err != nil {
 //		return err
@@ -316,7 +313,7 @@ func (n *Node) AddNode(c *gin.Context) {
 //	scenarioId, _ := strconv.Atoi(c.Param("scenario_id"))
 //	nodeId, _ := strconv.Atoi(c.Param("node_id"))
 //
-//	newNode := api.NewServiceNode{}
+//	newNode := api.NewServiceNodeRequest{}
 //	_ = c.BindJSON(&newNode)
 //
 //	// Auth
@@ -432,15 +429,15 @@ func (n *Node) DeleteNode(c *gin.Context) {
 	}
 
 	// Convert to Response model
-	var nodesResponse []api.ServiceNode
+	var nodesResponse []ServiceNodeResponse
 	for _, srv := range scenario.Services {
-		nodesResponse = append(nodesResponse, api.ServiceNode{
+		nodesResponse = append(nodesResponse, ServiceNodeResponse{
 			Id:       srv.ID,
 			ParentId: srv.ParentID,
 			Name:     srv.Name,
 			Type:     srv.Type,
 			SubType:  &(srv.SubType),
-			Position: api.Position{
+			Position: Position{
 				X: srv.PosX,
 				Y: srv.PosY,
 			},

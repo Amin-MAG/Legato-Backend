@@ -27,21 +27,6 @@ func NewScenarioUseCase(db *postgres.LegatoDB, timeout time.Duration) domain.Sce
 	}
 }
 
-func (s scenarioUseCase) StartScenarioInstantly(u *api.UserInfo, scenarioId uint) error {
-	user := converter.UserInfoToUserDb(*u)
-	scenario, err := s.db.GetUserScenarioById(&user, scenarioId)
-	if err != nil {
-		return err
-	}
-
-	err = scenario.Start()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // ForceStartScenario is not accessible for users.
 // It is used for starting the scheduled scenarios by scheduler.
 func (s scenarioUseCase) ForceStartScenario(scenarioId uint, scheduleToken []byte) error {

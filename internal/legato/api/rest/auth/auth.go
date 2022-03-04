@@ -3,10 +3,10 @@ package auth
 import (
 	"github.com/gin-gonic/gin"
 	"legato_server/api"
-	"legato_server/authenticate"
 	"legato_server/internal/legato/api/rest/server"
 	"legato_server/internal/legato/database"
 	"legato_server/internal/legato/database/models"
+	"legato_server/pkg/authenticate"
 	"net/http"
 )
 
@@ -25,7 +25,8 @@ func (a *Auth) Signup(c *gin.Context) {
 	err := c.ShouldBindJSON(&newUser)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
+			"message": "can not create this user",
+			"error":   err.Error(),
 		})
 		return
 	}
@@ -37,7 +38,8 @@ func (a *Auth) Signup(c *gin.Context) {
 		Password: newUser.Password,
 	}); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
+			"message": "can not create this user",
+			"error":   err.Error(),
 		})
 		return
 	}
@@ -52,7 +54,8 @@ func (a *Auth) Login(c *gin.Context) {
 	err := c.ShouldBindJSON(&cred)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
+			"message": "can not login",
+			"error":   err.Error(),
 		})
 		return
 	}
@@ -61,7 +64,8 @@ func (a *Auth) Login(c *gin.Context) {
 	expectedUser, err := a.db.GetUserByUsername(cred.Username)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
+			"message": "can not login",
+			"error":   err.Error(),
 		})
 		return
 	}
@@ -76,7 +80,8 @@ func (a *Auth) Login(c *gin.Context) {
 	)
 	if err != nil {
 		c.JSON(http.StatusForbidden, gin.H{
-			"error": err.Error(),
+			"message": "error in checking token",
+			"error":   err.Error(),
 		})
 		return
 	}

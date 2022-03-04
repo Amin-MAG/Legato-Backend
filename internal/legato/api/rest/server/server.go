@@ -17,6 +17,7 @@ type RestServerConfig struct {
 	HealthModule   RestModule
 	AuthModule     RestModule
 	ScenarioModule RestModule
+	NodeModule     RestModule
 	Middlewares    []middleware.GinMiddleware
 	ServingPort    string
 }
@@ -38,6 +39,7 @@ func NewServer(cfg RestServerConfig) (*http.Server, error) {
 	cfg.HealthModule.RegisterRoutes(v1)
 	cfg.AuthModule.RegisterRoutes(v1)
 	cfg.ScenarioModule.RegisterRoutes(v1)
+	cfg.NodeModule.RegisterRoutes(v1)
 
 	// Create and return the server
 	server := &http.Server{
