@@ -15,8 +15,7 @@ type Scenario struct {
 	IsActive          *bool
 	Interval          int32
 	LastScheduledTime time.Time
-	//RootServices      []services.Service `gorm:"-"`
-	//Services          []Service
+	Services          []Service
 	//ScheduleToken     []byte
 	//Histories         []History
 }

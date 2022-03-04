@@ -5,16 +5,13 @@ import (
 	"encoding/json"
 	"legato_server/internal/legato/database"
 	"legato_server/internal/legato/database/models"
-	"legato_server/pkg/logger"
 	"net/http"
 	"strings"
 )
 
-var log, _ = logger.NewLogger(logger.Config{})
-
 type HttpService struct {
 	Service models.Service
-	db      database.Database
+	db      *database.Database
 }
 
 type httpRequestData struct {
@@ -30,8 +27,10 @@ type httpGetRequestData struct {
 }
 
 func (h *HttpService) Execute(attrs ...interface{}) {
+	log.Debugf("*******Starting Http Service <%s>*******\n", h.Service.Name)
 	//SendLogMessage("*******Starting Http Service*******", *h.Service.ScenarioID, nil)
 
+	log.Debugf("Executing type <%s> : <%s>\n", h.Service.Type, h.Service.Name)
 	//logData := fmt.Sprintf("Executing type (%s) : %s\n", httpType, h.Service.Name)
 	//SendLogMessage(logData, *h.Service.ScenarioID, nil)
 
@@ -57,27 +56,29 @@ func (h *HttpService) Execute(attrs ...interface{}) {
 }
 
 func (h *HttpService) Next(...interface{}) {
-	err := legatoDb.db.Preload("Service").Preload("Service.Children").Find(&h).Error
+	children, err := (*h.db).GetServiceChildrenById(&h.Service)
 	if err != nil {
 		log.Println("!! CRITICAL ERROR !!", err)
 		return
 	}
 
+	log.Debugf("Executing <%s> Children: <%+v>\n", h.Service.Name, children)
 	//logData := fmt.Sprintf("Executing \"%s\" Children \n", h.Service.Name)
 	//SendLogMessage(logData, *h.Service.ScenarioID, nil)
 
-	for _, node := range h.Service.Children {
-		go func(n Service) {
-			serv, err := n.Load()
-			if err != nil {
-				log.Println("error in loading services in Next()")
-				return
-			}
+	for _, serviceModel := range children {
+		service, err := NewService(h.db, serviceModel)
+		if err != nil {
+			log.Warnf("can not create the service <%s>", serviceModel.Type)
+			log.Errorln(err.Error())
+		}
 
-			serv.Execute()
-		}(node)
+		go func(nextServ Service) {
+			nextServ.Execute()
+		}(service)
 	}
 
+	log.Debugf("*******End of <%s>*******\n", h.Service.Name)
 	//logData = fmt.Sprintf("*******End of \"%s\"*******", h.Service.Name)
 	//SendLogMessage(logData, *h.Service.ScenarioID, nil)
 }
@@ -176,6 +177,9 @@ func makeHttpRequest(url string, method string, body []byte, authorization *stri
 	return res, nil
 }
 
-func NewHttpService() Service {
-	return &HttpService{}
+func NewHttpService(db *database.Database, service models.Service) (Service, error) {
+	return &HttpService{
+		db:      db,
+		Service: service,
+	}, nil
 }

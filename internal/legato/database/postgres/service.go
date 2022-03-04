@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"gorm.io/gorm"
 	"legato_server/internal/legato/database/models"
-	"legato_server/services"
+	"legato_server/internal/legato/services"
 )
 
 type Service struct {

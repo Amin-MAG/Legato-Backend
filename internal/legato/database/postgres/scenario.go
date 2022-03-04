@@ -8,14 +8,14 @@ import (
 	"fmt"
 	"legato_server/api"
 	"legato_server/internal/legato/database/models"
-	"legato_server/services"
+	"legato_server/internal/legato/services"
 	"net/http"
 	"time"
 
 	"gorm.io/gorm"
 )
 
-// Each Scenario describes a schema that includes Handler and Events.
+// Scenario describes a schema that includes Handler and Events.
 // Name is the title of that Scenario.
 // Root is the first Service of the schema that start the scenario.
 type Scenario struct {
@@ -32,6 +32,11 @@ type Scenario struct {
 }
 
 func (s *Scenario) model() models.Scenario {
+	var scenarioServices []models.Service
+	for _, s := range s.Services {
+		scenarioServices = append(scenarioServices, s.model())
+	}
+
 	return models.Scenario{
 		ID:                s.ID,
 		CreatedAt:         s.CreatedAt,
@@ -41,6 +46,7 @@ func (s *Scenario) model() models.Scenario {
 		IsActive:          s.IsActive,
 		Interval:          s.Interval,
 		LastScheduledTime: s.LastScheduledTime,
+		Services:          scenarioServices,
 	}
 }
 
@@ -61,17 +67,21 @@ func (ldb *LegatoDB) AddScenario(u *models.User, s *models.Scenario) (models.Sce
 }
 
 func (ldb *LegatoDB) GetUserScenarios(u *models.User) ([]models.Scenario, error) {
-	user, _ := ldb.GetUserByUsername(u.Username)
-
 	var scenarios []Scenario
-	ldb.db.Model(&user).Order("updated_at desc").Association("Scenarios").Find(&scenarios)
-
-	var modelScenarios []models.Scenario
-	for _, s := range scenarios {
-		modelScenarios = append(modelScenarios, s.model())
+	err := ldb.db.
+		Where(&Scenario{UserID: u.ID}).
+		Order("updated_at desc").
+		Find(&scenarios).Error
+	if err != nil {
+		return []models.Scenario{}, err
 	}
 
-	return modelScenarios, nil
+	var scenarioModels []models.Scenario
+	for _, s := range scenarios {
+		scenarioModels = append(scenarioModels, s.model())
+	}
+
+	return scenarioModels, nil
 }
 
 func (ldb *LegatoDB) GetUserScenarioById(u *models.User, scenarioId uint) (models.Scenario, error) {

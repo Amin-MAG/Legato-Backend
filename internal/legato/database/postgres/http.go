@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"legato_server/internal/legato/database/models"
 	"net/http"
 	"strings"
 
@@ -46,6 +47,25 @@ func (w *httpRequestData) UnmarshalJSON(data []byte) error {
 
 func (h *Http) String() string {
 	return fmt.Sprintf("(@Http: %+v)", *h)
+}
+
+// Database methods
+func (ldb *LegatoDB) AddNodeToScenario(s *models.Scenario, h models.Service) (models.Service, error) {
+	// Create new database model
+	newService := Service{
+		Name:       h.Name,
+		OwnerType:  h.Type,
+		ParentID:   h.ParentID,
+		PosX:       h.PosX,
+		PosY:       h.PosY,
+		UserID:     s.UserID,
+		ScenarioID: &s.ID,
+		Data:       h.Data,
+		SubType:    h.SubType,
+	}
+	ldb.db.Create(&newService)
+
+	return newService.model(), nil
 }
 
 // Database methods

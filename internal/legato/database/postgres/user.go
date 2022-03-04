@@ -111,10 +111,10 @@ func (ldb *LegatoDB) FetchAllUsers() ([]models.User, error) {
 		return []models.User{}, errors.New("there is no user")
 	}
 
-	var modelUsers []models.User
+	var userModels []models.User
 	for _, u := range users {
-		modelUsers = append(modelUsers, u.model())
+		userModels = append(userModels, u.model())
 	}
 
-	return modelUsers, nil
+	return userModels, nil
 }

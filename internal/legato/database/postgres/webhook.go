@@ -6,6 +6,7 @@ import (
 	"fmt"
 	uuid "github.com/satori/go.uuid"
 	"gorm.io/gorm"
+	"legato_server/internal/legato/database/models"
 )
 
 const webhookType string = "webhooks"
@@ -120,16 +121,21 @@ func (ldb *LegatoDB) GetWebhookByService(serv Service) (*Webhook, error) {
 	return &wh, nil
 }
 
-func (ldb *LegatoDB) GetScenarioRootServices(s Scenario) ([]Service, error) {
-	var ss []Service
+func (ldb *LegatoDB) GetScenarioRootServices(s models.Scenario) ([]models.Service, error) {
+	var rootServices []Service
 	err := ldb.db.Where("parent_id is NULL").
 		Where("scenario_id = ?", s.ID).
-		Find(&ss).Error
+		Find(&rootServices).Error
 	if err != nil {
 		return nil, err
 	}
 
-	return ss, nil
+	var serviceModels []models.Service
+	for _, rs := range rootServices {
+		serviceModels = append(serviceModels, rs.model())
+	}
+
+	return serviceModels, nil
 }
 
 func (ldb *LegatoDB) GetWebhookByUUID(uuid uuid.UUID) (*Webhook, error) {
