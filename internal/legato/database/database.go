@@ -18,6 +18,12 @@ type Database interface {
 	GetScenarioByName(u *models.User, name string) (models.Scenario, error)
 	UpdateUserScenarioById(u *models.User, scenarioID uint, updatedScenario models.Scenario) error
 	DeleteUserScenarioById(u *models.User, scenarioID uint) error
+	GetScenarioRootServices(s models.Scenario) ([]models.Service, error)
 	//UpdateScenarioScheduleInfoById(u *User, scenarioID uint, lastScheduledTime time.Time, interval int32) error
 	//SetNewScheduleToken(u *User, scenarioID uint) ([]byte, error)
+
+	AddNodeToScenario(s *models.Scenario, h models.Service) (models.Service, error)
+	DeleteServiceById(scenario *models.Scenario, serviceId uint) error
+	GetServiceChildrenById(service *models.Service) ([]models.Service, error)
+	GetScenarioServiceById(scenario *models.Scenario, serviceId uint) (models.Service, error)
 }

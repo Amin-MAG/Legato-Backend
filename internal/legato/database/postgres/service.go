@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"legato_server/services"
-
 	"gorm.io/gorm"
+	"legato_server/internal/legato/database/models"
+	"legato_server/services"
 )
 
 type Service struct {
@@ -24,24 +24,47 @@ type Service struct {
 	SubType    string
 }
 
-func (s *Service) String() string {
+func (s *Service) model() models.Service {
+	var serviceChildren []models.Service
+	for _, child := range s.Children {
+		serviceChildren = append(serviceChildren, child.model())
+	}
+
+	return models.Service{
+		ID:         s.ID,
+		CreatedAt:  s.CreatedAt,
+		UpdatedAt:  s.UpdatedAt,
+		Name:       s.Name,
+		Type:       s.OwnerType,
+		ParentID:   s.ParentID,
+		PosX:       s.PosX,
+		PosY:       s.PosY,
+		UserID:     s.UserID,
+		ScenarioID: s.ScenarioID,
+		Data:       s.Data,
+		SubType:    s.SubType,
+		Children:   serviceChildren,
+	}
+}
+
+func (s *Service) string() string {
 	return fmt.Sprintf("(@Service: %+v)", *s)
 }
 
-func (ldb *LegatoDB) GetServiceById(scenario *Scenario, serviceId uint) (*Service, error) {
+func (ldb *LegatoDB) GetScenarioServiceById(scenario *models.Scenario, serviceId uint) (models.Service, error) {
 	var srv *Service
 	err := ldb.db.
 		Where(&Service{ScenarioID: &scenario.ID}).
 		Where("id = ?", serviceId).
 		Find(&srv).Error
 	if err != nil {
-		return nil, err
+		return models.Service{}, err
 	}
 
-	return srv, nil
+	return srv.model(), nil
 }
 
-func (ldb *LegatoDB) DeleteServiceById(scenario *Scenario, serviceId uint) error {
+func (ldb *LegatoDB) DeleteServiceById(scenario *models.Scenario, serviceId uint) error {
 	var srv *Service
 	ldb.db.
 		Preload("Children").
@@ -71,6 +94,23 @@ func (ldb *LegatoDB) DeleteServiceById(scenario *Scenario, serviceId uint) error
 	ldb.db.Delete(srv)
 
 	return nil
+}
+
+func (ldb *LegatoDB) GetServiceChildrenById(service *models.Service) ([]models.Service, error) {
+	var serviceWithChildren Service
+	if err := legatoDb.db.Model(&Service{}).
+		Where("id = ?", service.ID).
+		Preload("Children").
+		Find(&serviceWithChildren).Error; err != nil {
+		return nil, err
+	}
+
+	var serviceModels []models.Service
+	for _, child := range serviceWithChildren.Children {
+		serviceModels = append(serviceModels, child.model())
+	}
+
+	return serviceModels, nil
 }
 
 func (ldb *LegatoDB) GetServicesGraph(root *Service) (*Service, error) {
