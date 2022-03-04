@@ -3,6 +3,7 @@ package router
 import (
 	"fmt"
 	"legato_server/api"
+	"legato_server/config"
 	"legato_server/env"
 	"legato_server/helper/converter"
 	"net/http"
@@ -72,19 +73,19 @@ func connectionAuthUrl(c *gin.Context) {
 	switch service {
 	case "spotify":
 		c.JSON(200, gin.H{
-			"url": fmt.Sprintf(env.SpotifyAuthenticateUrl, env.ENV.WebPageUrl),
+			"url": fmt.Sprintf(config.SpotifyAuthenticateUrl, env.ENV.WebPageUrl),
 		})
 	case "google":
 		c.JSON(200, gin.H{
-			"url": fmt.Sprintf(env.GoogleAuthenticateUrl, env.ENV.WebPageUrl),
+			"url": fmt.Sprintf(config.GoogleAuthenticateUrl, env.ENV.WebPageUrl),
 		})
 	case "github":
 		c.JSON(200, gin.H{
-			"url": fmt.Sprintf(env.GitAuthenticateUrl, env.ENV.WebPageUrl),
+			"url": fmt.Sprintf(config.GitAuthenticateUrl, env.ENV.WebPageUrl),
 		})
 	case "discord":
 		c.JSON(200, gin.H{
-			"url": fmt.Sprintf(env.DiscordAuthenticateUrl, env.ENV.WebPageUrl),
+			"url": fmt.Sprintf(config.DiscordAuthenticateUrl, env.ENV.WebPageUrl),
 		})
 	}
 }

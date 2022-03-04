@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"legato_server/authenticate"
 	"legato_server/internal/legato/database"
+	"legato_server/pkg/authenticate"
 	"legato_server/pkg/logger"
 
 	"github.com/gin-gonic/gin"

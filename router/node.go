@@ -72,7 +72,7 @@ func addNode(c *gin.Context) {
 	username := c.Param("username")
 	scenarioId, _ := strconv.Atoi(c.Param("scenario_id"))
 
-	newNode := api.NewServiceNode{}
+	newNode := api.NewServiceNodeRequest{}
 	_ = c.BindJSON(&newNode)
 
 	// Auth
@@ -84,7 +84,7 @@ func addNode(c *gin.Context) {
 	// Service Switch
 	// NOTE: handle other non-service state
 	var err error
-	var addedServ api.ServiceNode
+	var addedServ api.ServiceNodeResponse
 	switch newNode.Type {
 	case "webhooks":
 		addedServ, err = resolvers.WebhookUseCase.AddWebhookToScenario(loginUser, uint(scenarioId), newNode)
@@ -161,7 +161,7 @@ func updateNode(c *gin.Context) {
 	scenarioId, _ := strconv.Atoi(c.Param("scenario_id"))
 	nodeId, _ := strconv.Atoi(c.Param("node_id"))
 
-	newNode := api.NewServiceNode{}
+	newNode := api.NewServiceNodeRequest{}
 	_ = c.BindJSON(&newNode)
 
 	// Auth
