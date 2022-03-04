@@ -1,0 +1,25 @@
+_id: req_3483158a3eab474583b3e5a05ea8e597
+type: Request
+parentId: fld_9087c7abb75846cdbfa15404084404c6
+modified: 1646352059909
+created: 1646320195111
+url: "{{ _.base_url }}/users/amin/scenarios/7/nodes/6"
+name: Delete Node From Scenario
+description: ""
+method: DELETE
+body: {}
+parameters: []
+headers:
+  - id: pair_88f4288d5f0f4c64b719a93af2197f5a
+    name: Authorization
+    value: "{{ _.token }}"
+    description: ""
+authentication: {}
+metaSortKey: -1646268354956.875
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

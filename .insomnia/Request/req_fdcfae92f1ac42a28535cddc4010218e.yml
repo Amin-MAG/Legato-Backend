@@ -1,0 +1,29 @@
+_id: req_fdcfae92f1ac42a28535cddc4010218e
+type: Request
+parentId: fld_9087c7abb75846cdbfa15404084404c6
+modified: 1646395208339
+created: 1646306573636
+url: "{{ _.base_url }}/users/amin/scenarios/7/nodes"
+name: Get Scenario Nodes
+description: ""
+method: GET
+body: {}
+parameters:
+  - id: pair_1e657de9e7b945759082f68fa3a92b85
+    name: only_root
+    value: "false"
+    description: ""
+headers:
+  - id: pair_88f4288d5f0f4c64b719a93af2197f5a
+    name: Authorization
+    value: "{{ _.token }}"
+    description: ""
+authentication: {}
+metaSortKey: -1646268521729.5
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

@@ -1,0 +1,25 @@
+_id: req_1d94e61884714e5c864605672a97fb18
+type: Request
+parentId: fld_c1d993466b1c4fb187997eeeaf661fa4
+modified: 1646307385431
+created: 1646264855522
+url: "{{ _.base_url }}/auth/user"
+name: Logged In User
+description: ""
+method: GET
+body: {}
+parameters: []
+headers:
+  - id: pair_2514c524615340c98b6de2cc72950647
+    name: Authorization
+    value: "{{ _.token }}"
+    description: ""
+authentication: {}
+metaSortKey: -1646264855522
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

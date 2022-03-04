@@ -1,0 +1,33 @@
+_id: req_45d863cc1915453c908d8303bbac883f
+type: Request
+parentId: fld_6d08190d2d9c4904b2bb48501989a9a9
+modified: 1646392167198
+created: 1646271026284
+url: "{{ _.base_url }}/users/amin/scenarios/8"
+name: Update Scenario
+description: ""
+method: PUT
+body:
+  mimeType: application/json
+  text: |-
+    {
+    	"name": "initial and basic scenario"
+    }
+parameters: []
+headers:
+  - id: pair_c3cc664cf9ad42748ebc4289219b379a
+    name: Authorization
+    value: "{{ _.token }}"
+    description: ""
+  - name: Content-Type
+    value: application/json
+    id: pair_1866fe340dd244f784bc5bbbd1cfce67
+authentication: {}
+metaSortKey: -1646266355080.5
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

@@ -1,0 +1,34 @@
+_id: req_33c466af6aeb4492baa354fe02fbc1db
+type: Request
+parentId: fld_6d08190d2d9c4904b2bb48501989a9a9
+modified: 1646272033822
+created: 1646267854562
+url: "{{ _.base_url }}/users/amin/scenarios"
+name: Create Scenario
+description: ""
+method: POST
+body:
+  mimeType: application/json
+  text: |-
+    {
+    	"name": "intial  alaki scenario",
+    	"isActive": false
+    }
+parameters: []
+headers:
+  - id: pair_c3cc664cf9ad42748ebc4289219b379a
+    name: Authorization
+    value: "{{ _.token }}"
+    description: ""
+  - name: Content-Type
+    value: application/json
+    id: pair_1866fe340dd244f784bc5bbbd1cfce67
+authentication: {}
+metaSortKey: -1646267854639
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

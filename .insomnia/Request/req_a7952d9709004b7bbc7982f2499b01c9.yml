@@ -1,0 +1,39 @@
+_id: req_a7952d9709004b7bbc7982f2499b01c9
+type: Request
+parentId: fld_9087c7abb75846cdbfa15404084404c6
+modified: 1646352057959
+created: 1646307486145
+url: "{{ _.base_url }}/users/amin/scenarios/7/nodes"
+name: Add Node To Scenario
+description: ""
+method: POST
+body:
+  mimeType: application/json
+  text: |-
+    {
+    	"name": "request to snapp",
+    	"type": "https",
+    	"parentId": 3,
+    	"position": {
+    		"x": 36,
+    		"y": 31
+    	}
+    }
+parameters: []
+headers:
+  - id: pair_88f4288d5f0f4c64b719a93af2197f5a
+    name: Authorization
+    value: "{{ _.token }}"
+    description: ""
+  - name: Content-Type
+    value: application/json
+    id: pair_91487bd12d2240b4a1c28d44ff4f3535
+authentication: {}
+metaSortKey: -1646268410547.75
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

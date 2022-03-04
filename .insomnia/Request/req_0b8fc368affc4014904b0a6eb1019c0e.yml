@@ -1,0 +1,30 @@
+_id: req_0b8fc368affc4014904b0a6eb1019c0e
+type: Request
+parentId: fld_6d08190d2d9c4904b2bb48501989a9a9
+modified: 1646392177231
+created: 1646353392745
+url: "{{ _.base_url }}/users/amin/scenarios/7"
+name: Start Scenario
+description: ""
+method: PATCH
+body:
+  mimeType: application/json
+  text: "{}"
+parameters: []
+headers:
+  - id: pair_c3cc664cf9ad42748ebc4289219b379a
+    name: Authorization
+    value: "{{ _.token }}"
+    description: ""
+  - name: Content-Type
+    value: application/json
+    id: pair_1866fe340dd244f784bc5bbbd1cfce67
+authentication: {}
+metaSortKey: -1646267104859.75
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

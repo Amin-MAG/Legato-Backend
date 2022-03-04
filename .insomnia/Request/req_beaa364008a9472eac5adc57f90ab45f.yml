@@ -1,0 +1,25 @@
+_id: req_beaa364008a9472eac5adc57f90ab45f
+type: Request
+parentId: fld_6d08190d2d9c4904b2bb48501989a9a9
+modified: 1646392152305
+created: 1646268785387
+url: "{{ _.base_url }}/users/amin/scenarios/7"
+name: Get Scenario Details
+description: ""
+method: GET
+body: {}
+parameters: []
+headers:
+  - id: pair_88f4288d5f0f4c64b719a93af2197f5a
+    name: Authorization
+    value: "{{ _.token }}"
+    description: ""
+authentication: {}
+metaSortKey: -1646268299366
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

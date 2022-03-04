@@ -1,0 +1,31 @@
+_id: req_5505bd423f964bd08b4de7d13055ab29
+type: Request
+parentId: fld_c1d993466b1c4fb187997eeeaf661fa4
+modified: 1646267862438
+created: 1646264698314
+url: "{{ _.base_url }}/auth/signup"
+name: Signup
+description: ""
+method: POST
+body:
+  mimeType: application/json
+  text: |-
+    {
+    	"username": "mohammad",
+    	"email": "mohammad@gmail.com",
+    	"password": "qweqwe"
+    }
+parameters: []
+headers:
+  - name: Content-Type
+    value: application/json
+    id: pair_4ae6793468344f62974efd3ec68c1199
+authentication: {}
+metaSortKey: -1646264698315
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

@@ -1,0 +1,30 @@
+_id: req_8512f5c75e874f94a715ba0344a36c6f
+type: Request
+parentId: fld_6d08190d2d9c4904b2bb48501989a9a9
+modified: 1646272141762
+created: 1646271032305
+url: "{{ _.base_url }}/users/amin/scenarios/9"
+name: Delete Scenario
+description: ""
+method: DELETE
+body:
+  mimeType: application/json
+  text: "{}"
+parameters: []
+headers:
+  - id: pair_c3cc664cf9ad42748ebc4289219b379a
+    name: Authorization
+    value: "{{ _.token }}"
+    description: ""
+  - name: Content-Type
+    value: application/json
+    id: pair_1866fe340dd244f784bc5bbbd1cfce67
+authentication: {}
+metaSortKey: -1646265605301.25
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global
