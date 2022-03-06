@@ -105,7 +105,7 @@ func (t Telegram) Execute(...interface{}) {
 
 	log.Printf("Executing type (%s) : %s\n", telegramType, t.Service.Name)
 
-	switch t.Service.SubType {
+	switch *t.Service.SubType {
 	case sendMessage:
 		var data sendMessageData
 		err = json.Unmarshal([]byte(t.Service.Data), &data)

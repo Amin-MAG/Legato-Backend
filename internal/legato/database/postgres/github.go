@@ -131,7 +131,7 @@ func (g Github) Execute(...interface{}) {
 	logData := fmt.Sprintf("Executing type (%s) : %s\n", gitType, g.Service.Name)
 	SendLogMessage(logData, *g.Service.ScenarioID, nil)
 
-	switch g.Service.SubType {
+	switch *g.Service.SubType {
 	case "createIssue":
 		var data createIssueData
 		err = json.Unmarshal([]byte(g.Service.Data), &data)

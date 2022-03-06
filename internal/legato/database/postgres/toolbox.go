@@ -95,7 +95,7 @@ func (t ToolBox) Execute(...interface{}) {
 	logData := fmt.Sprintf("Executing type (%s) : %s\n", toolBoxType, t.Service.Name)
 	SendLogMessage(logData, *t.Service.ScenarioID, &t.Service.ID)
 
-	switch t.Service.SubType {
+	switch *t.Service.SubType {
 	case toolBoxSleep:
 		var data toolBoxSleepData
 		err = json.Unmarshal([]byte(t.Service.Data), &data)

@@ -50,18 +50,24 @@ func (h *Http) String() string {
 }
 
 // Database methods
-func (ldb *LegatoDB) AddNodeToScenario(s *models.Scenario, h models.Service) (models.Service, error) {
+func (ldb *LegatoDB) AddNodeToScenario(s *models.Scenario, service models.Service) (models.Service, error) {
+	// Marshal the data
+	jsonString, err := json.Marshal(service.Data)
+	if err != nil {
+		return models.Service{}, err
+	}
+
 	// Create new database model
 	newService := Service{
-		Name:       h.Name,
-		OwnerType:  h.Type,
-		ParentID:   h.ParentID,
-		PosX:       h.PosX,
-		PosY:       h.PosY,
+		Name:       service.Name,
+		OwnerType:  service.Type,
+		ParentID:   service.ParentID,
+		PosX:       service.PosX,
+		PosY:       service.PosY,
 		UserID:     s.UserID,
 		ScenarioID: &s.ID,
-		Data:       h.Data,
-		SubType:    h.SubType,
+		Data:       string(jsonString),
+		SubType:    service.SubType,
 	}
 	ldb.db.Create(&newService)
 
@@ -79,27 +85,33 @@ func (ldb *LegatoDB) CreateHttp(s *Scenario, h Http) (*Http, error) {
 	return &h, nil
 }
 
-func (ldb *LegatoDB) UpdateHttp(s *Scenario, servId uint, nh Http) error {
-	var serv Service
-	err := ldb.db.Where(&Service{ScenarioID: &s.ID}).Where("id = ?", servId).Find(&serv).Error
+func (ldb *LegatoDB) UpdateScenarioNode(s *models.Scenario, servId uint, serv models.Service) error {
+	var service Service
+	err := ldb.db.
+		Where(&Service{ScenarioID: &s.ID}).
+		Where("id = ?", servId).
+		Find(&service).Error
 	if err != nil {
 		return err
 	}
 
-	var h Http
-	err = ldb.db.Where("id = ?", serv.OwnerID).Preload("Service").Find(&h).Error
+	// Marshal the data
+	jsonString, err := json.Marshal(serv.Data)
 	if err != nil {
 		return err
 	}
-	if h.Service.ID != servId {
-		return errors.New("the http service is not in this scenario")
-	}
 
-	ldb.db.Model(&serv).Updates(nh.Service)
-	ldb.db.Model(&h).Updates(nh)
-
-	if nh.Service.ParentID == nil {
-		legatoDb.db.Model(&serv).Select("parent_id").Update("parent_id", nil)
+	ldb.db.Model(&service).Updates(Service{
+		Name:      serv.Name,
+		OwnerType: serv.Type,
+		ParentID:  serv.ParentID,
+		PosX:      serv.PosX,
+		PosY:      serv.PosY,
+		Data:      string(jsonString),
+		SubType:   serv.SubType,
+	})
+	if serv.ParentID == nil {
+		legatoDb.db.Model(&service).Select("parent_id").Update("parent_id", nil)
 	}
 
 	return nil

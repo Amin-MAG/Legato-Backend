@@ -24,6 +24,7 @@ type Database interface {
 
 	AddNodeToScenario(s *models.Scenario, h models.Service) (models.Service, error)
 	DeleteServiceById(scenario *models.Scenario, serviceId uint) error
+	UpdateScenarioNode(s *models.Scenario, servId uint, service models.Service) error
 	GetServiceChildrenById(service *models.Service) ([]models.Service, error)
 	GetScenarioServiceById(scenario *models.Scenario, serviceId uint) (models.Service, error)
 }

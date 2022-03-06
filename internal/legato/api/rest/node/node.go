@@ -20,9 +20,9 @@ type Node struct {
 
 func (n *Node) RegisterRoutes(group *gin.RouterGroup) {
 	group.POST("/users/:username/scenarios/:scenario_id/nodes", n.AddNode)
-	//group.PUT("/users/:username/scenarios/:scenario_id/nodes/:node_id", n.GetUserScenarios)
+	group.PUT("/users/:username/scenarios/:scenario_id/nodes/:node_id", n.UpdateNode)
 	group.DELETE("/users/:username/scenarios/:scenario_id/nodes/:node_id", n.DeleteNode)
-	//group.GET("/users/:username/scenarios/:scenario_id/nodes/:node_id", n.GetScenarioDetail)
+	group.GET("/users/:username/scenarios/:scenario_id/nodes/:node_id", n.GetNode)
 	group.GET("/users/:username/scenarios/:scenario_id/nodes", n.GetScenarioNodes)
 	group.GET("/users/:username/scenarios/:scenario_id/nodes/:node_id/children", n.GetNodesChildren)
 }
@@ -77,7 +77,7 @@ func (n *Node) GetNodesChildren(c *gin.Context) {
 			ParentId: srv.ParentID,
 			Name:     srv.Name,
 			Type:     srv.Type,
-			SubType:  &(srv.SubType),
+			SubType:  srv.SubType,
 			Position: Position{
 				X: srv.PosX,
 				Y: srv.PosY,
@@ -136,7 +136,7 @@ func (n *Node) GetScenarioNodes(c *gin.Context) {
 			ParentId: srv.ParentID,
 			Name:     srv.Name,
 			Type:     srv.Type,
-			SubType:  &(srv.SubType),
+			SubType:  srv.SubType,
 			Position: Position{
 				X: srv.PosX,
 				Y: srv.PosY,
@@ -210,7 +210,7 @@ func (n *Node) AddNode(c *gin.Context) {
 			ParentId: addedHttpService.ParentID,
 			Name:     addedHttpService.Name,
 			Type:     addedHttpService.Type,
-			SubType:  &(addedHttpService.SubType),
+			SubType:  addedHttpService.SubType,
 			Position: Position{
 				X: addedHttpService.PosX,
 				Y: addedHttpService.PosY,
@@ -262,130 +262,178 @@ func (n *Node) AddNode(c *gin.Context) {
 	})
 }
 
-//func (w *HttpUseCase) Update(u *api.UserInfo, scenarioId uint, serviceId uint, nh api.NewServiceNodeRequest) error {
-//	user, err := w.db.GetUserByUsername(u.Username)
-//	if err != nil {
-//		return err
-//	}
-//
-//	scenario, err := w.db.GetUserScenarioById(&user, scenarioId)
-//	if err != nil {
-//		return err
-//	}
-//
-//	var http legatoDb2.Http
-//	http.Service = converter.NewServiceNodeToServiceDb(nh)
-//
-//	err = w.db.UpdateHttp(&scenario, serviceId, http)
-//	if err != nil {
-//		return err
-//	}
-//
-//	return nil
-//}
+func (n *Node) GetNode(c *gin.Context) {
+	username := c.Param("username")
+	scenarioIdParam, _ := strconv.Atoi(c.Param("scenario_id"))
+	scenarioId := uint(scenarioIdParam)
+	nodeIdParam, _ := strconv.Atoi(c.Param("node_id"))
+	nodeId := uint(nodeIdParam)
 
-//func (n *Node) getNode(c *gin.Context) {
-//	username := c.Param("username")
-//	scenarioId, _ := strconv.Atoi(c.Param("scenario_id"))
-//	nodeId, _ := strconv.Atoi(c.Param("node_id"))
-//
-//	// Auth
-//	loginUser := auth.CheckAuth(c, []string{username})
-//	if loginUser == nil {
-//		return
-//	}
-//
-//	node, err := n.db.GetServiceNodeById(loginUser, uint(scenarioId), uint(nodeId))
-//	if err != nil {
-//		c.JSON(http.StatusInternalServerError, gin.H{
-//			"message": fmt.Sprintf("can not fetch this node: %s", err),
-//		})
-//		return
-//	}
-//
-//	c.JSON(http.StatusOK, gin.H{
-//		"node": node,
-//	})
-//}
-//
-//func (n *Node) updateNode(c *gin.Context) {
-//	username := c.Param("username")
-//	scenarioId, _ := strconv.Atoi(c.Param("scenario_id"))
-//	nodeId, _ := strconv.Atoi(c.Param("node_id"))
-//
-//	newNode := api.NewServiceNodeRequest{}
-//	_ = c.BindJSON(&newNode)
-//
-//	// Auth
-//	loginUser := auth.CheckAuth(c, []string{username})
-//	if loginUser == nil {
-//		return
-//	}
-//
-//	// Get the existing service and get the type
-//	serv, err := n.db.GetServiceNodeById(loginUser, uint(scenarioId), uint(nodeId))
-//	if err != nil {
-//		c.JSON(http.StatusInternalServerError, gin.H{
-//			"message": fmt.Sprintf("can not fetch this scenario before updating: %s", err),
-//		})
-//		return
-//	}
-//	// Service Switch
-//	// NOTE: handle other non-service state
-//	switch serv.Type {
-//	case "webhooks":
-//		err = resolvers.WebhookUseCase.Update(loginUser, uint(scenarioId), uint(nodeId), newNode)
-//		break
-//	case "https":
-//		err = resolvers.HttpUserCase.Update(loginUser, uint(scenarioId), uint(nodeId), newNode)
-//		break
-//	case "telegrams":
-//		err = resolvers.TelegramUseCase.Update(loginUser, uint(scenarioId), uint(nodeId), newNode)
-//		break
-//	case "spotifies":
-//		err = resolvers.SpotifyUseCase.Update(loginUser, uint(scenarioId), uint(nodeId), newNode)
-//		break
-//	case "sshes":
-//		err = resolvers.SshUseCase.Update(loginUser, uint(scenarioId), uint(nodeId), newNode)
-//		break
-//	case "gmails":
-//		err = resolvers.GmailUseCase.Update(loginUser, uint(scenarioId), uint(nodeId), newNode)
-//		break
-//	case "githubs":
-//		err = resolvers.GithubUseCase.Update(loginUser, uint(scenarioId), uint(nodeId), newNode)
-//		break
-//	case "discords":
-//		err = resolvers.DiscordUseCase.Update(loginUser, uint(scenarioId), uint(nodeId), newNode)
-//		break
-//	case "tool_boxes":
-//		err = resolvers.ToolBoxUseCase.Update(loginUser, uint(scenarioId), uint(nodeId), newNode)
-//		break
-//	default:
-//		c.JSON(http.StatusBadRequest, gin.H{
-//			"message": fmt.Sprintf("there is not any service with name %s", newNode.Type),
-//		})
-//		return
-//	}
-//	if err != nil {
-//		c.JSON(http.StatusBadRequest, gin.H{
-//			"message": fmt.Sprintf("can not create this node: %s", err),
-//		})
-//		return
-//	}
-//
-//	updatedServ, err := n.db.GetServiceNodeById(loginUser, uint(scenarioId), uint(nodeId))
-//	if err != nil {
-//		c.JSON(http.StatusInternalServerError, gin.H{
-//			"message": fmt.Sprintf("can not fetch this scenario after updating: %s", err),
-//		})
-//		return
-//	}
-//
-//	c.JSON(http.StatusOK, gin.H{
-//		"message": "node is updated successfully.",
-//		"node":    updatedServ,
-//	})
-//}
+	// Auth
+	loggedInUser := auth.CheckAuth(c, []string{username})
+	if loggedInUser == nil {
+		return
+	}
+
+	scenario, err := n.db.GetUserScenarioById(loggedInUser, scenarioId)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "can not find this scenario",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	service, err := n.db.GetScenarioServiceById(&scenario, nodeId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("can not fetch this node: %s", err),
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	node := ServiceNodeResponse{
+		Id:       service.ID,
+		ParentId: service.ParentID,
+		Name:     service.Name,
+		Type:     service.Type,
+		SubType:  service.SubType,
+		Position: Position{
+			X: service.PosX,
+			Y: service.PosY,
+		},
+		Data: service.Data,
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"node": node,
+	})
+}
+
+func (n *Node) UpdateNode(c *gin.Context) {
+	username := c.Param("username")
+	scenarioIdParam, _ := strconv.Atoi(c.Param("scenario_id"))
+	scenarioId := uint(scenarioIdParam)
+	nodeIdParam, _ := strconv.Atoi(c.Param("node_id"))
+	nodeId := uint(nodeIdParam)
+
+	// Auth
+	loggedInUser := auth.CheckAuth(c, []string{username})
+	if loggedInUser == nil {
+		return
+	}
+
+	newNode := UpdateServiceNodeRequest{}
+	if err := c.ShouldBindJSON(&newNode); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "can not update this scenario",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	// Get the existing service and get the type
+	scenario, err := n.db.GetUserScenarioById(loggedInUser, scenarioId)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "can not find this scenario",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	serv, err := n.db.GetScenarioServiceById(&scenario, nodeId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": fmt.Sprintf("can not fetch this node: %s", err),
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	// Service Switch
+	// NOTE: handle other non-service state
+	switch newNode.Type {
+	//case "webhooks":
+	//	err = resolvers.WebhookUseCase.Update(loggedInUser, uint(scenarioId), uint(nodeId), newNode)
+	//	break
+	case "https":
+		newHttp := models.Service{
+			Name:     newNode.Name,
+			Type:     newNode.Type,
+			SubType:  newNode.SubType,
+			ParentID: newNode.ParentId,
+			PosX:     newNode.Position.X,
+			PosY:     newNode.Position.Y,
+			Data:     newNode.Data,
+		}
+
+		err = n.db.UpdateScenarioNode(&scenario, serv.ID, newHttp)
+		break
+	//case "telegrams":
+	//	err = resolvers.TelegramUseCase.Update(loggedInUser, uint(scenarioId), uint(nodeId), newNode)
+	//	break
+	//case "spotifies":
+	//	err = resolvers.SpotifyUseCase.Update(loggedInUser, uint(scenarioId), uint(nodeId), newNode)
+	//	break
+	//case "sshes":
+	//	err = resolvers.SshUseCase.Update(loggedInUser, uint(scenarioId), uint(nodeId), newNode)
+	//	break
+	//case "gmails":
+	//	err = resolvers.GmailUseCase.Update(loggedInUser, uint(scenarioId), uint(nodeId), newNode)
+	//	break
+	//case "githubs":
+	//	err = resolvers.GithubUseCase.Update(loggedInUser, uint(scenarioId), uint(nodeId), newNode)
+	//	break
+	//case "discords":
+	//	err = resolvers.DiscordUseCase.Update(loggedInUser, uint(scenarioId), uint(nodeId), newNode)
+	//	break
+	//case "tool_boxes":
+	//	err = resolvers.ToolBoxUseCase.Update(loggedInUser, uint(scenarioId), uint(nodeId), newNode)
+	//	break
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "can not update the node",
+			"error":   fmt.Sprintf("there is not any service with name %s", newNode.Type),
+		})
+		return
+	}
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "can not update this node",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	updatedService, err := n.db.GetScenarioServiceById(&scenario, nodeId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "can not fetch updated node",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	updatedNode := ServiceNodeResponse{
+		Id:       updatedService.ID,
+		ParentId: updatedService.ParentID,
+		Name:     updatedService.Name,
+		Type:     updatedService.Type,
+		SubType:  updatedService.SubType,
+		Position: Position{
+			X: updatedService.PosX,
+			Y: updatedService.PosY,
+		},
+		Data: updatedService.Data,
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "node is updated successfully.",
+		"node":    updatedNode,
+	})
+}
 
 func (n *Node) DeleteNode(c *gin.Context) {
 	// Params
@@ -436,7 +484,7 @@ func (n *Node) DeleteNode(c *gin.Context) {
 			ParentId: srv.ParentID,
 			Name:     srv.Name,
 			Type:     srv.Type,
-			SubType:  &(srv.SubType),
+			SubType:  srv.SubType,
 			Position: Position{
 				X: srv.PosX,
 				Y: srv.PosY,

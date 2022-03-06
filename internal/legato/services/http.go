@@ -14,18 +14,6 @@ type HttpService struct {
 	db      *database.Database
 }
 
-type httpRequestData struct {
-	Url    string
-	Method string
-	Body   map[string]interface{}
-}
-
-type httpGetRequestData struct {
-	Url    string
-	Method string
-	Body   string
-}
-
 func (h *HttpService) Execute(attrs ...interface{}) {
 	log.Debugf("*******Starting Http Service <%s>*******\n", h.Service.Name)
 	//SendLogMessage("*******Starting Http Service*******", *h.Service.ScenarioID, nil)
@@ -36,17 +24,16 @@ func (h *HttpService) Execute(attrs ...interface{}) {
 
 	// Http just has one kind of sub Service, so we do not need any switch-case statement.
 	// Provide data for make request
-	var data httpRequestData
-	err := json.Unmarshal([]byte(h.Service.Data), &data)
-	if err != nil {
-		log.Warnln(err)
+	data, ok := h.Service.Data.(map[string]interface{})
+	if !ok {
+		log.Warnln("can not convert to map")
 	}
 
-	requestBody, err := json.Marshal(data.Body)
+	requestBody, err := json.Marshal(data["body"])
 	if err != nil {
 		log.Warnln(err)
 	}
-	res, err := makeHttpRequest(data.Url, data.Method, requestBody, nil, h.Service.ScenarioID, &h.Service.ID)
+	res, err := makeHttpRequest(data["url"].(string), data["method"].(string), requestBody, nil, h.Service.ScenarioID, &h.Service.ID)
 	if err != nil {
 		log.Warnln(err)
 	}

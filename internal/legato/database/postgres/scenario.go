@@ -190,33 +190,33 @@ func (ldb *LegatoDB) SetNewScheduleToken(u *User, scenarioID uint) ([]byte, erro
 
 // Service management methods
 
-// Start
-// To Start scenario
-// isInstantMode specify whether the scenario started instantly or not.
-// when the isInstantMode is ture the scenario just executed once.
-func (s *Scenario) Start() error {
-
-	log.Println("Preparing scenario to start")
-	err := s.Prepare()
-	if err != nil {
-		return err
-	}
-
-	err = legatoDb.CreateHistory(s.ID)
-	if err != nil {
-		return err
-	}
-
-	log.Println("Executing root services of this scenario")
-	for _, serv := range s.RootServices {
-		go func(s services.Service) {
-			s.Execute()
-		}(serv)
-	}
-	log.Println("Executing finished")
-
-	return nil
-}
+//// Start
+//// To Start scenario
+//// isInstantMode specify whether the scenario started instantly or not.
+//// when the isInstantMode is ture the scenario just executed once.
+//func (s *Scenario) Start() error {
+//
+//	log.Println("Preparing scenario to start")
+//	err := s.Prepare()
+//	if err != nil {
+//		return err
+//	}
+//
+//	err = legatoDb.CreateHistory(s.ID)
+//	if err != nil {
+//		return err
+//	}
+//
+//	log.Println("Executing root services of this scenario")
+//	for _, serv := range s.RootServices {
+//		go func(s services.Service) {
+//			s.Execute()
+//		}(serv)
+//	}
+//	log.Println("Executing finished")
+//
+//	return nil
+//}
 
 func (s Scenario) Schedule(scheduleToken []byte) error {
 	if s.Interval != 0 {
@@ -245,52 +245,52 @@ func (s Scenario) Schedule(scheduleToken []byte) error {
 	return nil
 }
 
-// Prepare
-// To Prepare scenario
-func (s *Scenario) Prepare() error {
-	err := s.LoadRootService()
-	if err != nil {
-		return err
-	}
+//// Prepare
+//// To Prepare scenario
+//func (s *Scenario) Prepare() error {
+//	err := s.LoadRootService()
+//	if err != nil {
+//		return err
+//	}
+//
+//	return nil
+//}
 
-	return nil
-}
-
-// LoadRootService
-// To Load Root Service of scenario
-func (s *Scenario) LoadRootService() error {
-	servicesEntities, err := legatoDb.GetScenarioRootServices(*s)
-	if err != nil {
-		return err
-	}
-
-	var ss []services.Service
-	ss = []services.Service{}
-	for _, serv := range servicesEntities {
-		loadedServ, err := serv.Load()
-		if err != nil {
-			return nil
-		}
-
-		ss = append(ss, loadedServ)
-	}
-	s.RootServices = ss
-
-	return nil
-}
-
-type OwnerType struct {
-	OwnerType string
-}
-
-func (ldb *LegatoDB) GetScenarioNodeTypes(scenario *Scenario) (t []OwnerType, err error) {
-	err = ldb.db.Distinct("OwnerType").Model(&Service{}).
-		Where(&Service{ScenarioID: &scenario.ID}).
-		Find(&t).Error
-
-	if err != nil {
-		return []OwnerType{}, err
-	}
-
-	return t, nil
-}
+//// LoadRootService
+//// To Load Root Service of scenario
+//func (s *Scenario) LoadRootService() error {
+//	servicesEntities, err := legatoDb.GetScenarioRootServices(*s)
+//	if err != nil {
+//		return err
+//	}
+//
+//	var ss []services.Service
+//	ss = []services.Service{}
+//	for _, serv := range servicesEntities {
+//		loadedServ, err := serv.Load()
+//		if err != nil {
+//			return nil
+//		}
+//
+//		ss = append(ss, loadedServ)
+//	}
+//	s.RootServices = ss
+//
+//	return nil
+//}
+//
+//type OwnerType struct {
+//	OwnerType string
+//}
+//
+//func (ldb *LegatoDB) GetScenarioNodeTypes(scenario *Scenario) (t []OwnerType, err error) {
+//	err = ldb.db.Distinct("Type").Model(&Service{}).
+//		Where(&Service{ScenarioID: &scenario.ID}).
+//		Find(&t).Error
+//
+//	if err != nil {
+//		return []OwnerType{}, err
+//	}
+//
+//	return t, nil
+//}

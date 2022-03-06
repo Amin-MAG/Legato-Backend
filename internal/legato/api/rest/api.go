@@ -5,6 +5,7 @@ import (
 	"legato_server/config"
 	"legato_server/internal/legato/api/rest/auth"
 	"legato_server/internal/legato/api/rest/health"
+	"legato_server/internal/legato/api/rest/node"
 	"legato_server/internal/legato/api/rest/scenario"
 	"legato_server/internal/legato/api/rest/server"
 	"legato_server/internal/legato/database"
@@ -36,10 +37,17 @@ func NewApiServer(db database.Database, cfg *config.Config) (*http.Server, error
 		return nil, err
 	}
 
+	// Create node module
+	nodeMod, err := node.NewNodeModule(db)
+	if err != nil {
+		return nil, err
+	}
+
 	return server.NewServer(server.RestServerConfig{
 		HealthModule:   healthMod,
 		AuthModule:     authMod,
 		ScenarioModule: scenarioMod,
+		NodeModule:     nodeMod,
 		Middlewares: []middleware.GinMiddleware{
 			middleware.NewCORSMiddleware(),
 			middleware.NewAuthMiddleware(db),

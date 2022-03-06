@@ -21,13 +21,22 @@ type Service struct {
 	UserID     uint
 	ScenarioID *uint
 	Data       string
-	SubType    string
+	SubType    *string
 }
 
 func (s *Service) model() models.Service {
 	var serviceChildren []models.Service
 	for _, child := range s.Children {
 		serviceChildren = append(serviceChildren, child.model())
+	}
+
+	// Unmarshal the data
+	var unmarshalledData interface{}
+	err := json.Unmarshal([]byte(s.Data), &unmarshalledData)
+	if err != nil {
+		log.Warnf("can not parse data for %+v", s)
+		log.Warnln(err)
+		unmarshalledData = map[string]interface{}{}
 	}
 
 	return models.Service{
@@ -41,7 +50,7 @@ func (s *Service) model() models.Service {
 		PosY:       s.PosY,
 		UserID:     s.UserID,
 		ScenarioID: s.ScenarioID,
-		Data:       s.Data,
+		Data:       unmarshalledData,
 		SubType:    s.SubType,
 		Children:   serviceChildren,
 	}

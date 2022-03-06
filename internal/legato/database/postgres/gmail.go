@@ -141,7 +141,7 @@ func (g Gmail) Execute(...interface{}) {
 	logData := fmt.Sprintf("Executing type (%s) : %s\n", gmailType, g.Service.Name)
 	SendLogMessage(logData, *g.Service.ScenarioID, nil)
 
-	switch g.Service.SubType {
+	switch *g.Service.SubType {
 	case "sendEmail":
 		var data gmailLoginData
 		err = json.Unmarshal([]byte(g.Service.Data), &data)

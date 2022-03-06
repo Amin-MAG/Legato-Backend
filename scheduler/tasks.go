@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/vmihailenco/taskq/v3"
 	"legato_server/api"
-	"legato_server/env"
+	"legato_server/config"
 	"log"
 	"net/http"
 )
@@ -32,7 +32,7 @@ func startScenario(scenarioID int, token []byte) error {
 	}
 
 	// Make http request to do run this scenario
-	schedulerUrl := fmt.Sprintf("%s/api/scenarios/%d/force", env.DefaultLegatoUrl, scenarioID)
+	schedulerUrl := fmt.Sprintf("%s/api/scenarios/%d/force", config.DefaultLegatoUrl, scenarioID)
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", schedulerUrl, bytes.NewBuffer(body))
 	if err != nil {

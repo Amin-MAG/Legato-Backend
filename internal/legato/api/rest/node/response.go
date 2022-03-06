@@ -5,7 +5,7 @@ type ServiceNodeResponse struct {
 	ParentId *uint       `json:"parentId"`
 	Name     string      `json:"name"`
 	Type     string      `json:"type"`
-	SubType  *string     `json:"subType"`
+	SubType  *string     `json:"subType,omitempty"`
 	Position Position    `json:"position"`
 	Data     interface{} `json:"data"`
 }

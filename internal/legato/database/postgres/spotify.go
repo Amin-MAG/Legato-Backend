@@ -148,7 +148,7 @@ func (sp Spotify) Execute(...interface{}) {
 	// token := DbTokenToOauth2(tk)
 	client := auth().NewClient(&tk)
 
-	switch sp.Service.SubType {
+	switch *sp.Service.SubType {
 	case addTrackToPlaylist:
 		var data addToPlaylistData
 		err = json.Unmarshal([]byte(sp.Service.Data), &data)

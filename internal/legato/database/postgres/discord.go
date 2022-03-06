@@ -109,7 +109,7 @@ func (d Discord) Execute(...interface{}) {
 	// TODO:
 	token := ""
 	//token := env.ENV.DiscordBotToken
-	switch d.Service.SubType {
+	switch *d.Service.SubType {
 	case discordSendMessage:
 		var data discordSendMessageData
 		err = json.Unmarshal([]byte(d.Service.Data), &data)

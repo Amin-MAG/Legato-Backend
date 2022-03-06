@@ -18,6 +18,6 @@ type Service struct {
 	PosY       int
 	UserID     uint
 	ScenarioID *uint
-	Data       string
-	SubType    string
+	Data       interface{}
+	SubType    *string
 }
