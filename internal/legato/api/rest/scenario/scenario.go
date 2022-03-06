@@ -2,11 +2,13 @@ package scenario
 
 import (
 	"github.com/gin-gonic/gin"
+	"legato_server/api"
 	"legato_server/internal/legato/api/rest/auth"
 	"legato_server/internal/legato/api/rest/server"
 	"legato_server/internal/legato/database"
 	"legato_server/internal/legato/database/models"
 	"legato_server/internal/legato/services"
+	"legato_server/scheduler"
 	"log"
 	"net/http"
 	"strconv"
@@ -26,7 +28,7 @@ func (s *Scenario) RegisterRoutes(group *gin.RouterGroup) {
 	//group.POST("/users/:username/scenarios/:scenario_id/schedule", s.ScheduleScenario)
 	//group.PUT("/users/:username/scenarios/:scenario_id/set-interval", s.SetScenarioInterval)
 	//// For test purpose
-	//group.POST("/scenarios/:scenario_id/force", s.ForceStartScenario)
+	group.POST("/scenarios/:scenario_id/force", s.ForceStartScenario)
 }
 
 func (s *Scenario) AddScenario(c *gin.Context) {
@@ -262,37 +264,74 @@ func (s *Scenario) StartScenario(c *gin.Context) {
 	})
 }
 
-//func (s *Scenario) ForceStartScenario(c *gin.Context) {
-//	scenarioId, _ := strconv.Atoi(c.Param("scenario_id"))
-//
-//	sss := api.NewStartScenarioSchedule{}
-//	_ = c.BindJSON(&sss)
-//
-//	// Check if it is scheduler
-//	// It should be more secure later
-//	if c.GetHeader("Authorization") != scheduler.AccessToken {
-//		log.Println(c.GetHeader("Authorization"))
-//		log.Println(scheduler.AccessToken)
-//		c.JSON(http.StatusForbidden, gin.H{
-//			"message": "You do not have the access to force",
-//		})
-//		return
-//	}
-//
-//	// Start that scenario because of the scheduler signal
-//	err := resolvers.ScenarioUseCase.ForceStartScenario(uint(scenarioId), sss.Token)
-//	if err != nil {
-//		log.Println(err)
-//		c.JSON(http.StatusInternalServerError, gin.H{
-//			"message": fmt.Sprintf("can not force start this scenario: %s", err),
-//		})
-//		return
-//	}
-//
-//	c.JSON(http.StatusOK, gin.H{
-//		"message": "scenario is started successfully",
-//	})
-//}
+func (s *Scenario) ForceStartScenario(c *gin.Context) {
+	scenarioIdParam, _ := strconv.Atoi(c.Param("scenario_id"))
+	scenarioId := uint(scenarioIdParam)
+
+	sss := api.NewStartScenarioSchedule{}
+	if err := c.BindJSON(&sss); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "can not force start this scenario",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	// Check if it is scheduler
+	// It should be more secure later
+	if c.GetHeader("Authorization") != scheduler.AccessToken {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "You do not have the access to force",
+		})
+		return
+	}
+
+	// Start that scenario because of the scheduler signal
+	_, err := s.db.GetScenarioById(scenarioId)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "can not find this scenario",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	//if !bytes.Equal(scenario.ScheduleToken, scheduleToken) {
+	//	c.JSON(http.StatusNotFound, gin.H{
+	//		"message": "can not force start this scenario",
+	//		"error":   errors.New("unfortunately the token has been expired"),
+	//	})
+	//	return
+	//}
+
+	//if scenario.IsActive == nil {
+	//	return errors.New("this scenario has null isActive field")
+	//}
+
+	//if !(*scenario.IsActive) {
+	//	return errors.New("this scenario is inactive")
+	//}
+
+	//err = scenario.Start()
+	//if err != nil {
+	//	return err
+	//}
+
+	//err = scenario.Schedule(scheduleToken)
+	//if err != nil {
+	//	log.Println(err)
+	//	c.JSON(http.StatusInternalServerError, gin.H{
+	//		"message": "can not force scheduling this scenario",
+	//		"error": err.Error(),
+	//	})
+	//	return
+	//}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "scenario is started successfully",
+	})
+}
+
 //
 //func (s *Scenario) ScheduleScenario(c *gin.Context) {
 //	username := c.Param("username")

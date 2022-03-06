@@ -2,18 +2,18 @@ package usecase
 
 import (
 	"legato_server/api"
-	legatoDb "legato_server/db"
 	"legato_server/domain"
 	"legato_server/helper/converter"
+	"legato_server/internal/legato/database/postgres"
 	"time"
 )
 
 type loggerUseCase struct {
-	db             *legatoDb.LegatoDB
+	db             *postgres.LegatoDB
 	contextTimeout time.Duration
 }
 
-func NewLoggerUseCase(db *legatoDb.LegatoDB, timeout time.Duration) domain.LoggerUseCase {
+func NewLoggerUseCase(db *postgres.LegatoDB, timeout time.Duration) domain.LoggerUseCase {
 	return &loggerUseCase{
 		db:             db,
 		contextTimeout: timeout,
