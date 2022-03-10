@@ -70,83 +70,6 @@ func (ldb *LegatoDB) SetEnableWebhookByID(webhookID uint, isEnable bool) error {
 	return ldb.db.Save(&updatedWebhook).Error
 }
 
-//func (ldb *LegatoDB) CreateSeparateWebhook(u *User, wh Webhook) (*Webhook, error) {
-//	wh.Service.UserID = u.ID
-//	wh.Service.ScenarioID = nil
-//
-//	ldb.db.Create(&wh)
-//	ldb.db.Save(&wh)
-//
-//	return &wh, nil
-//}
-
-//func (ldb *LegatoDB) CreateWebhookInScenario(u *User, s *Scenario, parent *Service, name string, x int, y int) *Webhook {
-//	var wh Webhook
-//	if parent != nil {
-//		wh = Webhook{Service: Service{Name: name, UserID: u.ID, ScenarioID: &s.ID, ParentID: &parent.ID, PosX: x, PosY: y}}
-//	} else {
-//		wh = Webhook{Service: Service{Name: name, UserID: u.ID, ScenarioID: &s.ID, PosX: x, PosY: y}}
-//	}
-//	ldb.db.Create(&wh)
-//	ldb.db.Save(&wh)
-//	return &wh
-//}
-
-//func (ldb *LegatoDB) UpdateWebhook(s *Scenario, servId uint, nwh Webhook) error {
-//	var serv Service
-//	err := ldb.db.Where(&Service{ScenarioID: &s.ID}).Where("id = ?", servId).Find(&serv).Error
-//	if err != nil {
-//		return err
-//	}
-//
-//	var wh Webhook
-//	err = ldb.db.Where("id = ?", serv.OwnerID).Preload("Service").Find(&wh).Error
-//	if err != nil {
-//		return err
-//	}
-//	if wh.Service.ID != servId {
-//		return errors.New("the webhook service is not in this scenario")
-//	}
-//
-//	ldb.db.Model(&serv).Updates(nwh.Service)
-//	ldb.db.Model(&wh).Updates(nwh)
-//
-//	return nil
-//}
-//
-//func (ldb *LegatoDB) UpdateSeparateWebhook(u *User, wid uint, nwh Webhook) error {
-//	var wh Webhook
-//	err := ldb.db.Where("id = ?", wid).Preload("Service").Find(&wh).Error
-//	if err != nil {
-//		return err
-//	}
-//	if wh.ID != wid {
-//		return errors.New("the webhook service is not existed")
-//	}
-//	if wh.Service.UserID != u.ID {
-//		return errors.New("the webhook service is not for this user")
-//	}
-//	serv := wh.Service
-//	ldb.db.Model(&serv).Updates(nwh.Service)
-//	ldb.db.Model(&wh).Updates(nwh)
-//
-//	return nil
-//}
-
-//func (ldb *LegatoDB) GetWebhookByService(serv Service) (*Webhook, error) {
-//	var wh Webhook
-//	err := ldb.db.Where("id = ?", serv.OwnerID).Preload("Service").Find(&wh).Error
-//	if err != nil {
-//		return nil, err
-//	}
-//	if wh.ID != uint(serv.OwnerID) {
-//		return nil, errors.New("the webhook service is not in this scenario")
-//	}
-//
-//	return &wh, nil
-//}
-//
-
 func (ldb *LegatoDB) GetScenarioRootServices(s models.Scenario) ([]models.Service, error) {
 	var rootServices []Service
 	err := ldb.db.Where("parent_id is NULL").
@@ -210,28 +133,6 @@ func (ldb *LegatoDB) GetWebhookByServiceID(serviceID uint) (models.Webhook, erro
 
 	return webhook.model(), nil
 }
-
-//func (ldb *LegatoDB) DeleteSeparateWebhookById(u *User, wid uint) error {
-//	var wh Webhook
-//	err := ldb.db.Where("id = ?", wid).Preload("Service").Find(&wh).Error
-//	if err != nil {
-//		return err
-//	}
-//	if wh.ID != wid {
-//		return errors.New("the webhook service is not existed")
-//	}
-//	// if webhook was not deleted in scenario
-//	if wh.Service.ID != 0 {
-//		if wh.Service.UserID != u.ID {
-//			return errors.New("the webhook service is not for this user")
-//		}
-//	}
-//
-//	ldb.db.Delete(&wh)
-//	ldb.db.Delete(&wh.Service)
-//
-//	return nil
-//}
 
 //func (ldb *LegatoDB) GetWebhookHistoryLogsById(u *User, wid uint) (logs []ServiceLog, err error) {
 //	var wdb Webhook
