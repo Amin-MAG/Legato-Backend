@@ -18,6 +18,7 @@ type User struct {
 	Password    string
 	LastLogin   time.Time
 	Scenarios   []Scenario
+	Webhooks    []Webhook
 	Services    []Service
 	Connections []Connection
 }

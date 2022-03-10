@@ -6,7 +6,7 @@ import (
 )
 
 type Pipeline struct {
-	db           *database.Database
+	db           database.Database
 	RootServices []Service
 }
 
@@ -26,7 +26,7 @@ func (p *Pipeline) Start() {
 	log.Debugln("Executing finished")
 }
 
-func NewPipeline(db *database.Database, rootServiceModels []models.Service) (*Pipeline, error) {
+func NewPipeline(db database.Database, rootServiceModels []models.Service) (*Pipeline, error) {
 	var rootServices []Service
 	for _, rsm := range rootServiceModels {
 		service, err := NewService(db, rsm)

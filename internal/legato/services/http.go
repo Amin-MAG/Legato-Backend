@@ -11,7 +11,7 @@ import (
 
 type HttpService struct {
 	Service models.Service
-	db      *database.Database
+	db      database.Database
 }
 
 func (h *HttpService) Execute(attrs ...interface{}) {
@@ -43,9 +43,9 @@ func (h *HttpService) Execute(attrs ...interface{}) {
 }
 
 func (h *HttpService) Next(...interface{}) {
-	children, err := (*h.db).GetServiceChildrenById(&h.Service)
+	children, err := h.db.GetServiceChildrenById(&h.Service)
 	if err != nil {
-		log.Println("!! CRITICAL ERROR !!", err)
+		log.Warnf("error in running next() for http %+v, error: %s", h.Service, err.Error())
 		return
 	}
 
@@ -56,8 +56,7 @@ func (h *HttpService) Next(...interface{}) {
 	for _, serviceModel := range children {
 		service, err := NewService(h.db, serviceModel)
 		if err != nil {
-			log.Warnf("can not create the service <%s>", serviceModel.Type)
-			log.Errorln(err.Error())
+			log.Warnf("can not create the service <%v>, error: %s", serviceModel, err.Error())
 		}
 
 		go func(nextServ Service) {
@@ -164,7 +163,7 @@ func makeHttpRequest(url string, method string, body []byte, authorization *stri
 	return res, nil
 }
 
-func NewHttpService(db *database.Database, service models.Service) (Service, error) {
+func NewHttpService(db database.Database, service models.Service) (Service, error) {
 	return &HttpService{
 		db:      db,
 		Service: service,

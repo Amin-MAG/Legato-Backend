@@ -18,10 +18,12 @@ type Service interface {
 	Next(attrs ...interface{})
 }
 
-func NewService(db *database.Database, service models.Service) (createdService Service, err error) {
+func NewService(db database.Database, service models.Service) (createdService Service, err error) {
 	switch service.Type {
 	case "https":
 		createdService, err = NewHttpService(db, service)
+	case "webhooks":
+		createdService, err = NewWebhookService(db, service)
 	default:
 		err = errors.New(fmt.Sprintf("there is not a %s service", service.Type))
 	}
