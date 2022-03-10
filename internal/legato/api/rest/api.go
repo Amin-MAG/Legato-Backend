@@ -8,6 +8,7 @@ import (
 	"legato_server/internal/legato/api/rest/node"
 	"legato_server/internal/legato/api/rest/scenario"
 	"legato_server/internal/legato/api/rest/server"
+	"legato_server/internal/legato/api/rest/webhook"
 	"legato_server/internal/legato/database"
 	"legato_server/middleware"
 	"net/http"
@@ -43,11 +44,18 @@ func NewApiServer(db database.Database, cfg *config.Config) (*http.Server, error
 		return nil, err
 	}
 
+	// Create webhook module
+	webhookMod, err := webhook.NewWebhookModule(db)
+	if err != nil {
+		return nil, err
+	}
+
 	return server.NewServer(server.RestServerConfig{
 		HealthModule:   healthMod,
 		AuthModule:     authMod,
 		ScenarioModule: scenarioMod,
 		NodeModule:     nodeMod,
+		WebhookModule:  webhookMod,
 		Middlewares: []middleware.GinMiddleware{
 			middleware.NewCORSMiddleware(),
 			middleware.NewAuthMiddleware(db),

@@ -8,11 +8,13 @@ import (
 	"legato_server/internal/legato/database"
 	"legato_server/internal/legato/database/models"
 	"legato_server/internal/legato/services"
+	"legato_server/pkg/logger"
 	"legato_server/scheduler"
-	"log"
 	"net/http"
 	"strconv"
 )
+
+var log, _ = logger.NewLogger(logger.Config{})
 
 type Scenario struct {
 	db database.Database
@@ -239,7 +241,7 @@ func (s *Scenario) StartScenario(c *gin.Context) {
 	}
 
 	// Start that scenario
-	log.Println("Preparing scenario to start")
+	log.Infoln("Preparing scenario to start")
 	rootServiceModels, err := s.db.GetScenarioRootServices(scenario)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -249,7 +251,7 @@ func (s *Scenario) StartScenario(c *gin.Context) {
 		return
 	}
 
-	pipeline, err := services.NewPipeline(&s.db, rootServiceModels)
+	pipeline, err := services.NewPipeline(s.db, rootServiceModels)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": "can not start this scenario",
