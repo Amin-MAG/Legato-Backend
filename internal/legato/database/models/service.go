@@ -1,6 +1,7 @@
 package models
 
 import (
+	uuid "github.com/satori/go.uuid"
 	"gorm.io/gorm"
 	"time"
 )
@@ -20,4 +21,15 @@ type Service struct {
 	ScenarioID *uint
 	Data       interface{}
 	SubType    *string
+}
+
+type Webhook struct {
+	ID        uint
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt
+	Token     uuid.UUID
+	IsEnable  bool
+	UserID    uint
+	ServiceID uint
 }

@@ -5,12 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"gorm.io/gorm"
 	"legato_server/internal/legato/database/models"
 	"net/http"
 	"strings"
-
-	"gorm.io/gorm"
 )
 
 const httpType string = "https"
@@ -130,79 +128,14 @@ func (ldb *LegatoDB) GetHttpByService(serv Service) (*Http, error) {
 	return &h, nil
 }
 
-// Service Interface for Http
-func (h Http) Execute(...interface{}) {
-	err := legatoDb.db.Preload("Service").Find(&h).Error
-	if err != nil {
-		log.Println("!! CRITICAL ERROR !!", err)
-		h.Next()
-		return
-	}
-
-	SendLogMessage("*******Starting Http Service*******", *h.Service.ScenarioID, nil)
-
-	logData := fmt.Sprintf("Executing type (%s) : %s\n", httpType, h.Service.Name)
-	SendLogMessage(logData, *h.Service.ScenarioID, nil)
-	// Http just has one kind of sub service so we do not need any switch-case statement.
-	// Provide data for make request
-	var data httpRequestData
-	err = json.Unmarshal([]byte(h.Service.Data), &data)
-	if err != nil {
-		log.Println(err)
-	}
-
-	requestBody, err := json.Marshal(data.Body)
-	if err != nil {
-		log.Println(err)
-	}
-	_, err = makeHttpRequest(data.Url, data.Method, requestBody, nil, h.Service.ScenarioID, &h.Service.ID)
-	if err != nil {
-		log.Println(err)
-	}
-
-	h.Next()
-}
-
-func (h Http) Post() {
-	data := fmt.Sprintf("Executing type (%s) node in background : %s\n", httpType, h.Service.Name)
-	SendLogMessage(data, *h.Service.ScenarioID, nil)
-}
-
-func (h Http) Next(...interface{}) {
-	err := legatoDb.db.Preload("Service").Preload("Service.Children").Find(&h).Error
-	if err != nil {
-		log.Println("!! CRITICAL ERROR !!", err)
-		return
-	}
-
-	logData := fmt.Sprintf("Executing \"%s\" Children \n", h.Service.Name)
-	SendLogMessage(logData, *h.Service.ScenarioID, nil)
-
-	for _, node := range h.Service.Children {
-		go func(n Service) {
-			serv, err := n.Load()
-			if err != nil {
-				log.Println("error in loading services in Next()")
-				return
-			}
-
-			serv.Execute()
-		}(node)
-	}
-
-	logData = fmt.Sprintf("*******End of \"%s\"*******", h.Service.Name)
-	SendLogMessage(logData, *h.Service.ScenarioID, nil)
-}
-
-// Service interface helper functions
 func makeHttpRequest(url string, method string, body []byte, authorization *string, scenarioId *uint, hId *uint) (res *http.Response, err error) {
-	logData := fmt.Sprintf("Make http request")
-	SendLogMessage(logData, *scenarioId, hId)
+	//logData := fmt.Sprintf("Make http request")
+	//SendLogMessage(logData, *scenarioId, hId)
 
-	logData = fmt.Sprintf("\nurl: %s\nmethod: %s", url, method)
-	SendLogMessage(logData, *scenarioId, hId)
+	//logData = fmt.Sprintf("\nurl: %s\nmethod: %s", url, method)
+	//SendLogMessage(logData, *scenarioId, hId)
 
-	SendLogMessage(string(body), *scenarioId, hId)
+	//SendLogMessage(string(body), *scenarioId, hId)
 
 	switch method {
 	case strings.ToLower(http.MethodGet):
@@ -268,22 +201,22 @@ func makeHttpRequest(url string, method string, body []byte, authorization *stri
 	}
 
 	// Log the result
-	bodyString := ""
-	if res != nil && res.Body != nil {
-		bodyBytes, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return nil, err
-		}
-		bodyString = string(bodyBytes)
-	}
+	//bodyString := ""
+	//if res != nil && res.Body != nil {
+	//	bodyBytes, err := ioutil.ReadAll(res.Body)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//	bodyString = string(bodyBytes)
+	//}
 
-	logData = fmt.Sprintf("Got Respose from http request")
-	SendLogMessage(logData, *scenarioId, hId)
+	//logData = fmt.Sprintf("Got Respose from http request")
+	//SendLogMessage(logData, *scenarioId, hId)
 
-	SendLogMessage(bodyString, *scenarioId, hId)
+	//SendLogMessage(bodyString, *scenarioId, hId)
 
-	logData = fmt.Sprintf("service status: %s, %v", res.Status, res.StatusCode)
-	SendLogMessage(logData, *scenarioId, hId)
+	//logData = fmt.Sprintf("Service status: %s, %v", res.Status, res.StatusCode)
+	//SendLogMessage(logData, *scenarioId, hId)
 
 	return res, nil
 }
