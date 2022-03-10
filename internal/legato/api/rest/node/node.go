@@ -25,6 +25,7 @@ func (n *Node) RegisterRoutes(group *gin.RouterGroup) {
 	group.GET("/users/:username/scenarios/:scenario_id/nodes/:node_id", n.GetNode)
 	group.GET("/users/:username/scenarios/:scenario_id/nodes", n.GetScenarioNodes)
 	group.GET("/users/:username/scenarios/:scenario_id/nodes/:node_id/children", n.GetNodesChildren)
+	group.GET("/users/:username/scenarios/:scenario_id/nodes/:node_id/webhook", n.GetNodeWebhook)
 }
 
 func (n *Node) GetNodesChildren(c *gin.Context) {
@@ -59,7 +60,6 @@ func (n *Node) GetNodesChildren(c *gin.Context) {
 		return
 	}
 
-	// TODO: FROM HERE
 	nodesChildren, err := n.db.GetServiceChildrenById(&serv)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
@@ -109,7 +109,7 @@ func (n *Node) GetScenarioNodes(c *gin.Context) {
 
 	scenario, err := n.db.GetUserScenarioById(loginUser, scenarioId)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "can not fetch this scenario",
 			"error":   err.Error(),
 		})
@@ -171,27 +171,63 @@ func (n *Node) AddNode(c *gin.Context) {
 		return
 	}
 
+	scenario, err := n.db.GetUserScenarioById(loggedInUser, scenarioId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "can not fetch this scenario",
+			"error":   err.Error(),
+		})
+		return
+	}
+
 	// Service Switch
 	// NOTE: handle other non-service state
-	var err error
 	var addedServ ServiceNodeResponse
 	switch newNode.Type {
-	//case "webhooks":
-	//	addedServ, err = resolvers.WebhookUseCase.AddWebhookToScenario(loggedInUser, uint(scenarioId), newNode)
-	//	break
+	case "webhooks":
+		webhookService := models.Service{
+			Name:     newNode.Name,
+			Type:     "webhooks",
+			ParentID: newNode.ParentId,
+			PosX:     newNode.Position.X,
+			PosY:     newNode.Position.Y,
+		}
+
+		addedWebhookService, err := n.db.AddNodeToScenario(&scenario, webhookService)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"message": "can not add this node to scenario",
+				"error":   err.Error(),
+			})
+			return
+		}
+
+		// Create webhook
+		_, err = n.db.CreateWebhookService(loggedInUser, &addedWebhookService, models.Webhook{})
+		if err != nil {
+			_ = n.db.DeleteServiceById(&scenario, addedWebhookService.ID)
+			c.JSON(http.StatusBadRequest, gin.H{
+				"message": "can not create a new webhook",
+				"error":   err.Error(),
+			})
+			return
+		}
+
+		addedServ = ServiceNodeResponse{
+			Id:       addedWebhookService.ID,
+			ParentId: addedWebhookService.ParentID,
+			Name:     addedWebhookService.Name,
+			Type:     addedWebhookService.Type,
+			SubType:  addedWebhookService.SubType,
+			Position: Position{
+				X: addedWebhookService.PosX,
+				Y: addedWebhookService.PosY,
+			},
+			Data: addedWebhookService.Data,
+		}
+
+		break
 	case "https":
-		//addedServ, err = resolvers.HttpUserCase.AddToScenario(loggedInUser, uint(scenarioId), newNode)
-
-		user, err := n.db.GetUserByUsername(loggedInUser.Username)
-		if err != nil {
-			break
-		}
-
-		scenario, err := n.db.GetUserScenarioById(&user, scenarioId)
-		if err != nil {
-			break
-		}
-
 		httpService := models.Service{
 			Name:     newNode.Name,
 			Type:     "https",
@@ -202,6 +238,10 @@ func (n *Node) AddNode(c *gin.Context) {
 
 		addedHttpService, err := n.db.AddNodeToScenario(&scenario, httpService)
 		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"message": "can not add this node to scenario",
+				"error":   err.Error(),
+			})
 			return
 		}
 
@@ -286,28 +326,76 @@ func (n *Node) GetNode(c *gin.Context) {
 
 	service, err := n.db.GetScenarioServiceById(&scenario, nodeId)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"message": fmt.Sprintf("can not fetch this node: %s", err),
 			"error":   err.Error(),
 		})
 		return
 	}
 
-	node := ServiceNodeResponse{
-		Id:       service.ID,
-		ParentId: service.ParentID,
-		Name:     service.Name,
-		Type:     service.Type,
-		SubType:  service.SubType,
-		Position: Position{
-			X: service.PosX,
-			Y: service.PosY,
+	c.JSON(http.StatusOK, gin.H{
+		"node": ServiceNodeResponse{
+			Id:       service.ID,
+			ParentId: service.ParentID,
+			Name:     service.Name,
+			Type:     service.Type,
+			SubType:  service.SubType,
+			Position: Position{
+				X: service.PosX,
+				Y: service.PosY,
+			},
+			Data: service.Data,
 		},
-		Data: service.Data,
+	})
+}
+
+func (n *Node) GetNodeWebhook(c *gin.Context) {
+	// Params
+	username := c.Param("username")
+	scenarioIdParam, _ := strconv.Atoi(c.Param("scenario_id"))
+	scenarioId := uint(scenarioIdParam)
+	nodeIdParam, _ := strconv.Atoi(c.Param("node_id"))
+	nodeId := uint(nodeIdParam)
+
+	// Auth
+	loggedInUser := auth.CheckAuth(c, []string{username})
+	if loggedInUser == nil {
+		return
+	}
+
+	scenario, err := n.db.GetUserScenarioById(loggedInUser, scenarioId)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "can not find this scenario",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	serv, err := n.db.GetScenarioServiceById(&scenario, nodeId)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "can not find this node in the scenario",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	webhook, err := n.db.GetWebhookByServiceID(serv.ID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "can not fetch the webhook for this node",
+			"error":   err.Error(),
+		})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"node": node,
+		"webhook": WebhookResponse{
+			Id:       webhook.ID,
+			Token:    webhook.Token.String(),
+			IsEnable: webhook.IsEnable,
+		},
 	})
 }
 
