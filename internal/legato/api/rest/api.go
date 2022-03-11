@@ -10,12 +10,13 @@ import (
 	"legato_server/internal/legato/api/rest/server"
 	"legato_server/internal/legato/api/rest/webhook"
 	"legato_server/internal/legato/database"
+	"legato_server/internal/legato/scheduler"
 	"legato_server/middleware"
 	"net/http"
 )
 
 // NewApiServer Creates the modules and the API server
-func NewApiServer(db database.Database, cfg *config.Config) (*http.Server, error) {
+func NewApiServer(db database.Database, schedulerClient scheduler.Client, cfg *config.Config) (*http.Server, error) {
 	if cfg == nil {
 		return nil, errors.New("the config object is nil")
 	}
@@ -33,7 +34,7 @@ func NewApiServer(db database.Database, cfg *config.Config) (*http.Server, error
 	}
 
 	// Create scenario module
-	scenarioMod, err := scenario.NewScenarioModule(db)
+	scenarioMod, err := scenario.NewScenarioModule(db, schedulerClient)
 	if err != nil {
 		return nil, err
 	}
@@ -60,6 +61,6 @@ func NewApiServer(db database.Database, cfg *config.Config) (*http.Server, error
 			middleware.NewCORSMiddleware(),
 			middleware.NewAuthMiddleware(db),
 		},
-		ServingPort: cfg.Legato.ServingPort},
-	)
+		ServingPort: cfg.Legato.ServingPort,
+	})
 }

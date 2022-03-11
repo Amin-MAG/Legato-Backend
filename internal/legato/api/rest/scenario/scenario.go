@@ -1,15 +1,19 @@
 package scenario
 
 import (
+	"bytes"
+	"encoding/json"
+	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
-	"legato_server/api"
 	"legato_server/internal/legato/api/rest/auth"
 	"legato_server/internal/legato/api/rest/server"
 	"legato_server/internal/legato/database"
 	"legato_server/internal/legato/database/models"
+	"legato_server/internal/legato/scheduler"
 	"legato_server/internal/legato/services"
+	"legato_server/internal/scheduler/tasks"
 	"legato_server/pkg/logger"
-	"legato_server/scheduler"
 	"net/http"
 	"strconv"
 )
@@ -17,7 +21,8 @@ import (
 var log, _ = logger.NewLogger(logger.Config{})
 
 type Scenario struct {
-	db database.Database
+	db              database.Database
+	schedulerClient scheduler.Client
 }
 
 func (s *Scenario) RegisterRoutes(group *gin.RouterGroup) {
@@ -27,9 +32,8 @@ func (s *Scenario) RegisterRoutes(group *gin.RouterGroup) {
 	group.GET("/users/:username/scenarios/:scenario_id", s.GetScenarioDetail)
 	group.DELETE("/users/:username/scenarios/:scenario_id", s.DeleteScenario)
 	group.PATCH("/users/:username/scenarios/:scenario_id", s.StartScenario)
-	//group.POST("/users/:username/scenarios/:scenario_id/schedule", s.ScheduleScenario)
+	group.POST("/users/:username/scenarios/:scenario_id/schedule", s.ScheduleScenario)
 	//group.PUT("/users/:username/scenarios/:scenario_id/set-interval", s.SetScenarioInterval)
-	//// For test purpose
 	group.POST("/scenarios/:scenario_id/force", s.ForceStartScenario)
 }
 
@@ -270,8 +274,17 @@ func (s *Scenario) ForceStartScenario(c *gin.Context) {
 	scenarioIdParam, _ := strconv.Atoi(c.Param("scenario_id"))
 	scenarioId := uint(scenarioIdParam)
 
-	sss := api.NewStartScenarioSchedule{}
-	if err := c.BindJSON(&sss); err != nil {
+	// Check if it is scheduler
+	// It should be more secure later
+	if c.GetHeader("Authorization") != tasks.AccessToken {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "You do not have the access to force",
+		})
+		return
+	}
+
+	sss := NewStartScenarioSchedule{}
+	if err := c.ShouldBindJSON(&sss); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "can not force start this scenario",
 			"error":   err.Error(),
@@ -279,17 +292,8 @@ func (s *Scenario) ForceStartScenario(c *gin.Context) {
 		return
 	}
 
-	// Check if it is scheduler
-	// It should be more secure later
-	if c.GetHeader("Authorization") != scheduler.AccessToken {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"message": "You do not have the access to force",
-		})
-		return
-	}
-
 	// Start that scenario because of the scheduler signal
-	_, err := s.db.GetScenarioById(scenarioId)
+	scenario, err := s.db.GetScenarioById(scenarioId)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"message": "can not find this scenario",
@@ -298,36 +302,60 @@ func (s *Scenario) ForceStartScenario(c *gin.Context) {
 		return
 	}
 
-	//if !bytes.Equal(scenario.ScheduleToken, scheduleToken) {
-	//	c.JSON(http.StatusNotFound, gin.H{
-	//		"message": "can not force start this scenario",
-	//		"error":   errors.New("unfortunately the token has been expired"),
-	//	})
-	//	return
-	//}
+	// Check token
+	if scenario.ScheduleToken == "" || scenario.ScheduleToken != sss.Token {
+		err = errors.New("unfortunately the token has been expired")
+		c.JSON(http.StatusForbidden, gin.H{
+			"message": "can not force start this scenario",
+			"error":   err.Error(),
+		})
+		return
+	}
 
-	//if scenario.IsActive == nil {
-	//	return errors.New("this scenario has null isActive field")
-	//}
+	// Handle inactive scenarios
+	if scenario.IsActive == nil {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "can not force start inactive scenario",
+		})
+		return
+	}
+	if !(*scenario.IsActive) {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "can not force start inactive scenario",
+		})
+		return
+	}
 
-	//if !(*scenario.IsActive) {
-	//	return errors.New("this scenario is inactive")
-	//}
+	// Start that scenario
+	log.Infoln("Preparing scenario to start")
+	rootServiceModels, err := s.db.GetScenarioRootServices(scenario)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "can not prepare this scenario",
+			"error":   err.Error(),
+		})
+		return
+	}
 
-	//err = scenario.Start()
-	//if err != nil {
-	//	return err
-	//}
+	pipeline, err := services.NewPipeline(s.db, rootServiceModels)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "can not start this scenario",
+			"error":   err.Error(),
+		})
+		return
+	}
+	pipeline.Start()
 
-	//err = scenario.Schedule(scheduleToken)
-	//if err != nil {
-	//	log.Println(err)
-	//	c.JSON(http.StatusInternalServerError, gin.H{
-	//		"message": "can not force scheduling this scenario",
-	//		"error": err.Error(),
-	//	})
-	//	return
-	//}
+	err = s.schedulerClient.Schedule(scenario, sss.Token)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "can not force scheduling this scenario",
+			"error":   err.Error(),
+		})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "scenario is started successfully",
@@ -409,8 +437,88 @@ func (s *Scenario) ForceStartScenario(c *gin.Context) {
 //	})
 //}
 
-func NewScenarioModule(db database.Database) (server.RestModule, error) {
+func (s *Scenario) ScheduleScenario(c *gin.Context) {
+	username := c.Param("username")
+	scenarioIdParam, _ := strconv.Atoi(c.Param("scenario_id"))
+	scenarioId := uint(scenarioIdParam)
+
+	// Auth
+	loggedInUser := auth.CheckAuth(c, []string{username})
+	if loggedInUser == nil {
+		return
+	}
+
+	sss := NewStartScenarioSchedule{}
+	if err := c.ShouldBindJSON(&sss); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "can not create this user",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	// Schedule that scenario
+	log.Debugf("Request new schedule for scenairo %d in %+v", scenarioId, sss.ScheduledTime)
+
+	// Get user scenario
+	_, err := s.db.GetUserScenarioById(loggedInUser, scenarioId)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "can not find this scenario",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	// Update the time and interval for this scenario
+	err = s.db.UpdateScenarioScheduleByID(loggedInUser, scenarioId, sss.ScheduledTime, sss.Interval)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "can not update schedule info for this scenario",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	// Generate a new schedule token
+	token, err := s.db.SetNewScheduleToken(loggedInUser, scenarioId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "can not create token for this scheduling",
+			"error":   err.Error(),
+		})
+		return
+	}
+	sss.Token = token
+
+	// Make http request to enqueue this job
+	schedulerUrl := fmt.Sprintf("%s/api/v1/schedule/scenario/%d", s.schedulerClient.URL, scenarioId)
+	body, err := json.Marshal(sss)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "can not parse the body to request to scheduler",
+			"error":   err.Error(),
+		})
+		return
+	}
+	reqBody := bytes.NewBuffer(body)
+	_, err = http.Post(schedulerUrl, "application/json", reqBody)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "can not send request to scheduler",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "scenario is scheduled successfully",
+	})
+}
+
+func NewScenarioModule(db database.Database, schedulerClient scheduler.Client) (server.RestModule, error) {
 	return &Scenario{
-		db: db,
+		db:              db,
+		schedulerClient: schedulerClient,
 	}, nil
 }

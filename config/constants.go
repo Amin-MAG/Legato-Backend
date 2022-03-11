@@ -1,12 +1,10 @@
 package config
 
 const (
-	DefaultTlsPort      = "443"
-	DefaultWebHost      = "http://localhost"
-	DefaultWebUrl       = "http://localhost:8080"
-	DefaultLegatoUrl    = "http://legato_server:8080"
-	DefaultSchedulerUrl = "http://legato_scheduler:8090"
-	DefaultWebPage      = "https://abstergo.ir"
+	DefaultTlsPort = "443"
+	DefaultWebHost = "http://localhost"
+	DefaultWebUrl  = "http://localhost:8080"
+	DefaultWebPage = "https://abstergo.ir"
 )
 
 // App Connections URL
