@@ -1,8 +1,6 @@
 package scenario
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -16,6 +14,7 @@ import (
 	"legato_server/pkg/logger"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 var log, _ = logger.NewLogger(logger.Config{})
@@ -33,7 +32,7 @@ func (s *Scenario) RegisterRoutes(group *gin.RouterGroup) {
 	group.DELETE("/users/:username/scenarios/:scenario_id", s.DeleteScenario)
 	group.PATCH("/users/:username/scenarios/:scenario_id", s.StartScenario)
 	group.POST("/users/:username/scenarios/:scenario_id/schedule", s.ScheduleScenario)
-	//group.PUT("/users/:username/scenarios/:scenario_id/set-interval", s.SetScenarioInterval)
+	group.PUT("/users/:username/scenarios/:scenario_id/set-interval", s.SetScenarioInterval)
 	group.POST("/scenarios/:scenario_id/force", s.ForceStartScenario)
 }
 
@@ -347,7 +346,9 @@ func (s *Scenario) ForceStartScenario(c *gin.Context) {
 	}
 	pipeline.Start()
 
-	err = s.schedulerClient.Schedule(scenario, sss.Token)
+	// Scheduling the next execution
+	interval := time.Duration(scenario.Interval) * time.Minute
+	err = s.schedulerClient.Schedule(scenario, time.Now().Add(interval), sss.Token)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -461,7 +462,7 @@ func (s *Scenario) ScheduleScenario(c *gin.Context) {
 	log.Debugf("Request new schedule for scenairo %d in %+v", scenarioId, sss.ScheduledTime)
 
 	// Get user scenario
-	_, err := s.db.GetUserScenarioById(loggedInUser, scenarioId)
+	scenario, err := s.db.GetUserScenarioById(loggedInUser, scenarioId)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"message": "can not find this scenario",
@@ -491,21 +492,11 @@ func (s *Scenario) ScheduleScenario(c *gin.Context) {
 	}
 	sss.Token = token
 
-	// Make http request to enqueue this job
-	schedulerUrl := fmt.Sprintf("%s/api/v1/schedule/scenario/%d", s.schedulerClient.URL, scenarioId)
-	body, err := json.Marshal(sss)
+	// Schedule the first execution
+	err = s.schedulerClient.Schedule(scenario, sss.ScheduledTime, token)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "can not parse the body to request to scheduler",
-			"error":   err.Error(),
-		})
-		return
-	}
-	reqBody := bytes.NewBuffer(body)
-	_, err = http.Post(schedulerUrl, "application/json", reqBody)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "can not send request to scheduler",
+			"message": "can not schedule first execution",
 			"error":   err.Error(),
 		})
 		return
@@ -513,6 +504,90 @@ func (s *Scenario) ScheduleScenario(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "scenario is scheduled successfully",
+	})
+}
+
+func (s *Scenario) SetScenarioInterval(c *gin.Context) {
+	username := c.Param("username")
+	scenarioIdParam, _ := strconv.Atoi(c.Param("scenario_id"))
+	scenarioId := uint(scenarioIdParam)
+
+	ni := NewScenarioInterval{}
+	if err := c.ShouldBindJSON(&ni); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "can not parse new scenario interval",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	// Auth
+	loggedInUser := auth.CheckAuth(c, []string{username})
+	if loggedInUser == nil {
+		return
+	}
+
+	// Fetch the scenario
+	scenario, err := s.db.GetUserScenarioById(loggedInUser, scenarioId)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "can not find this scenario",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	// Update the interval for this scenario
+	err = s.db.UpdateScenarioScheduleByID(loggedInUser, scenarioId, time.Now(), ni.Interval)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "can not update scenario interval",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	// Generate a new schedule token
+	token, err := s.db.SetNewScheduleToken(loggedInUser, scenarioId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "can not create token for this scheduling",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	// Specifying the scheduling
+	// after the start time it should schedule the execution
+	// for the next interval minutes.
+	// before the start time it should schedule it again with
+	// new token.
+	if time.Now().After(scenario.LastScheduledTime) {
+		// Scheduling the next execution
+		interval := time.Duration(ni.Interval) * time.Minute
+		err = s.schedulerClient.Schedule(scenario, time.Now().Add(interval), token)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"message": "can not schedule next execution",
+				"error":   err.Error(),
+			})
+			return
+		}
+	} else {
+		// Schedule the first execution
+		err = s.schedulerClient.Schedule(scenario, scenario.LastScheduledTime, token)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"message": "can not schedule first execution",
+				"error":   err.Error(),
+			})
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":  fmt.Sprintf("interval has been set %d minutes", ni.Interval),
+		"scenario": scenario,
 	})
 }
 

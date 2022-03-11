@@ -22,37 +22,34 @@ type Client struct {
 	URL string
 }
 
-func (client *Client) Schedule(s models.Scenario, scheduleToken string) error {
-	if s.Interval != 0 {
-		log.Infof("Scheduling the scenario for %d minutes later", s.Interval)
-		minutes := time.Duration(s.Interval) * time.Minute
-		sss := &schedulemodel.NewStartScenarioSchedule{
-			ScheduledTime: time.Now().Add(minutes),
-			Token:         scheduleToken,
-		}
-
-		// Make http request to enqueue this job
-		// TODO: Clean this and add an HTTP package
-		schedulerUrl := fmt.Sprintf("%s/api/v1/schedule/scenario/%d", client.URL, s.ID)
-		body, err := json.Marshal(sss)
-		if err != nil {
-			return err
-		}
-		reqBody := bytes.NewBuffer(body)
-		resp, err := http.Post(schedulerUrl, "application/json", reqBody)
-		if err != nil {
-			return err
-		}
-		log.Infoln("Scenario Scheduled successfully")
-
-		// To log the response
-		var responseBody map[string]interface{}
-		data, err := ioutil.ReadAll(resp.Body)
-		if err := json.Unmarshal(data, &responseBody); err != nil {
-			log.Fatalf("Parse response failed, reason: %v \n", err)
-		}
-		log.Debugf("Response body: %+v", responseBody)
+func (client *Client) Schedule(s models.Scenario, scheduledTime time.Time, scheduleToken string) error {
+	log.Infof("Scheduling the scenario for %+v later", scheduledTime)
+	sss := &schedulemodel.NewStartScenarioSchedule{
+		ScheduledTime: scheduledTime,
+		Token:         scheduleToken,
 	}
+
+	// Make http request to enqueue this job
+	// TODO: Clean this and add an HTTP package
+	schedulerUrl := fmt.Sprintf("%s/api/v1/schedule/scenario/%d", client.URL, s.ID)
+	body, err := json.Marshal(sss)
+	if err != nil {
+		return err
+	}
+	reqBody := bytes.NewBuffer(body)
+	resp, err := http.Post(schedulerUrl, "application/json", reqBody)
+	if err != nil {
+		return err
+	}
+	log.Infoln("Scenario Scheduled successfully")
+
+	// To log the response
+	var responseBody map[string]interface{}
+	data, err := ioutil.ReadAll(resp.Body)
+	if err := json.Unmarshal(data, &responseBody); err != nil {
+		log.Fatalf("Parse response failed, reason: %v \n", err)
+	}
+	log.Debugf("Response body: %+v", responseBody)
 
 	return nil
 }

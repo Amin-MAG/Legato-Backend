@@ -27,3 +27,7 @@ type NewStartScenarioSchedule struct {
 	Interval      int32     `json:"interval"`
 	Token         string    `json:"token"`
 }
+
+type NewScenarioInterval struct {
+	Interval int32 `json:"interval" binding:"required"`
+}

@@ -6,6 +6,12 @@ type HistoryInfo struct {
 	ScenarioId uint   `json:"scenario_id"`
 }
 
+type ScenarioDetail struct {
+	ID       uint   `json:"id"`
+	Name     string `json:"name"`
+	IsActive *bool  `json:"isActive"`
+}
+
 //type RecentUserHistory struct {
 //	Scenario    BriefScenario `json:"scenario"`
 //	HistoryInfo HistoryInfo   `json:"history"`
