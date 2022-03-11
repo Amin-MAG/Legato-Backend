@@ -13,14 +13,14 @@ import (
 
 type User struct {
 	gorm.Model
-	Username    string
-	Email       string
-	Password    string
-	LastLogin   time.Time
-	Scenarios   []Scenario
-	Webhooks    []Webhook
-	Services    []Service
-	Connections []Connection
+	Username  string
+	Email     string
+	Password  string
+	LastLogin time.Time
+	Scenarios []Scenario
+	Webhooks  []Webhook
+	Services  []Service
+	//Connections []Connection
 }
 
 func (u *User) model() models.User {

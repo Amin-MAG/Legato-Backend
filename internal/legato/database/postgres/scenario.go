@@ -24,7 +24,7 @@ type Scenario struct {
 	Services          []Service
 	ScheduleToken     uuid.UUID
 	LastScheduledTime time.Time
-	Histories         []History
+	//Histories         []History
 }
 
 func (s *Scenario) model() models.Scenario {

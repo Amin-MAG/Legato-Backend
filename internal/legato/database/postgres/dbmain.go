@@ -48,22 +48,10 @@ func NewPostgresDatabase(cfg *config.Config) (database.Database, error) {
 // for all of our models.
 func createSchema(db *gorm.DB) error {
 	_ = db.AutoMigrate(User{})
-	_ = db.AutoMigrate(Connection{})
 	_ = db.AutoMigrate(Scenario{})
 	_ = db.AutoMigrate(Service{})
 	_ = db.AutoMigrate(Webhook{})
 	_ = db.AutoMigrate(Http{})
-	_ = db.AutoMigrate(Telegram{})
-	_ = db.AutoMigrate(Spotify{})
-	_ = db.AutoMigrate(Token{})
-	_ = db.AutoMigrate(Ssh{})
-	_ = db.AutoMigrate(History{})
-	_ = db.AutoMigrate(ServiceLog{})
-	_ = db.AutoMigrate(LogMessage{})
-	_ = db.AutoMigrate(Gmail{})
-	_ = db.AutoMigrate(Github{})
-	_ = db.AutoMigrate(Discord{})
-	_ = db.AutoMigrate(ToolBox{})
 
 	return nil
 }

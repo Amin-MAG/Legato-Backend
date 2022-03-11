@@ -2,7 +2,6 @@ package auth
 
 import (
 	"github.com/gin-gonic/gin"
-	"legato_server/api"
 	"legato_server/internal/legato/api/rest/server"
 	"legato_server/internal/legato/database"
 	"legato_server/internal/legato/database/models"
@@ -98,7 +97,7 @@ func (a *Auth) LoggedInUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"user": api.UserInfo{
+		"user": UserInfo{
 			ID:       loggedInUser.ID,
 			Email:    loggedInUser.Email,
 			Username: loggedInUser.Username,
