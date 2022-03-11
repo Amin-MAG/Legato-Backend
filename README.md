@@ -24,9 +24,9 @@ A digest of your activities and your scenarios.
     ```shell script
     $ git clone https://github.com/Ragnacodes/Legato-Backend
     ```
-- Open terminal and enter this command to run server.
+  
+- Open terminal and use docker compose to run the server.
 
     ```shell script
-    $ docker-compose -f docker-compose-dev.yml up --build
+    $ docker-compose up --build
     ```
-    > **NOTE:** Do not forget `sudo` if you are using linux base operating system.

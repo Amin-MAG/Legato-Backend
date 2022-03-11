@@ -11,7 +11,7 @@ import (
 	"legato_server/internal/legato/api/rest/webhook"
 	"legato_server/internal/legato/database"
 	"legato_server/internal/legato/scheduler"
-	"legato_server/middleware"
+	middleware2 "legato_server/internal/middleware"
 	"net/http"
 )
 
@@ -57,9 +57,9 @@ func NewApiServer(db database.Database, schedulerClient scheduler.Client, cfg *c
 		ScenarioModule: scenarioMod,
 		NodeModule:     nodeMod,
 		WebhookModule:  webhookMod,
-		Middlewares: []middleware.GinMiddleware{
-			middleware.NewCORSMiddleware(),
-			middleware.NewAuthMiddleware(db),
+		Middlewares: []middleware2.GinMiddleware{
+			middleware2.NewCORSMiddleware(),
+			middleware2.NewAuthMiddleware(db),
 		},
 		ServingPort: cfg.Legato.ServingPort,
 	})

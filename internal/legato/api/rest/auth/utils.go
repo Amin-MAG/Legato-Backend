@@ -3,7 +3,7 @@ package auth
 import (
 	"github.com/gin-gonic/gin"
 	"legato_server/internal/legato/database/models"
-	"legato_server/middleware"
+	"legato_server/internal/middleware"
 	"net/http"
 )
 

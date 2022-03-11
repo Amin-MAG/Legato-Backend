@@ -3,7 +3,7 @@ package server
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"legato_server/middleware"
+	"legato_server/internal/middleware"
 	"net/http"
 )
 

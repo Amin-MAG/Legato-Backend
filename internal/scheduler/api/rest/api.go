@@ -3,11 +3,11 @@ package rest
 import (
 	"errors"
 	"legato_server/config"
+	middleware2 "legato_server/internal/middleware"
 	"legato_server/internal/scheduler/api/rest/health"
 	"legato_server/internal/scheduler/api/rest/schedule"
 	"legato_server/internal/scheduler/api/rest/server"
 	"legato_server/internal/scheduler/tasks"
-	"legato_server/middleware"
 	"net/http"
 )
 
@@ -32,8 +32,8 @@ func NewApiServer(taskQueue tasks.LegatoTaskQueue, cfg *config.Config) (*http.Se
 	return server.NewServer(server.RestServerConfig{
 		HealthModule:    healthMod,
 		SchedulerModule: schedulerMod,
-		Middlewares: []middleware.GinMiddleware{
-			middleware.NewCORSMiddleware(),
+		Middlewares: []middleware2.GinMiddleware{
+			middleware2.NewCORSMiddleware(),
 		},
 		ServingPort: cfg.Scheduler.ServingPort,
 	})
