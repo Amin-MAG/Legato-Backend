@@ -1,4 +1,4 @@
-package api
+package schedule
 
 import "time"
 
@@ -14,7 +14,6 @@ import "time"
 // Token is used when communication established between legato scheduler.
 type NewStartScenarioSchedule struct {
 	ScheduledTime time.Time `json:"scheduledTime"`
-	SystemTime    time.Time `json:"systemTime"`
 	Interval      int32     `json:"interval"`
-	Token         []byte     `json:"token"`
+	Token         string    `json:"token"`
 }
