@@ -1,15 +1,11 @@
 package postgres
 
 import (
-	"bytes"
-	"crypto/rand"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"legato_server/api"
+	uuid "github.com/satori/go.uuid"
 	"legato_server/internal/legato/database/models"
 	"legato_server/internal/legato/services"
-	"net/http"
 	"time"
 
 	"gorm.io/gorm"
@@ -26,7 +22,7 @@ type Scenario struct {
 	Interval          int32
 	RootServices      []services.Service `gorm:"-"`
 	Services          []Service
-	ScheduleToken     []byte
+	ScheduleToken     uuid.UUID
 	LastScheduledTime time.Time
 	Histories         []History
 }
@@ -47,6 +43,7 @@ func (s *Scenario) model() models.Scenario {
 		Interval:          s.Interval,
 		LastScheduledTime: s.LastScheduledTime,
 		Services:          scenarioServices,
+		ScheduleToken:     s.ScheduleToken.String(),
 	}
 }
 
@@ -105,7 +102,7 @@ func (ldb *LegatoDB) GetScenarioById(scenarioId uint) (models.Scenario, error) {
 		Preload("Services").
 		Find(&sc).Error
 	if err != nil {
-		return models.Scenario{}, errors.New("the scenario is not in user scenarios")
+		return models.Scenario{}, err
 	}
 
 	return sc.model(), nil
@@ -149,43 +146,33 @@ func (ldb *LegatoDB) DeleteUserScenarioById(u *models.User, scenarioID uint) err
 	return nil
 }
 
-func (ldb *LegatoDB) UpdateScenarioScheduleInfoById(
-	u *User, scenarioID uint, lastScheduledTime time.Time, interval int32,
-) error {
+func (ldb *LegatoDB) UpdateScenarioScheduleByID(u *models.User, scenarioID uint, lastScheduledTime time.Time, interval int32) error {
 	var scenario Scenario
 	ldb.db.Where(&Scenario{UserID: u.ID}).Where("id = ?", scenarioID).Find(&scenario)
 	if scenario.ID != scenarioID {
 		return errors.New("the scenario is not in user scenarios")
 	}
 
-	ldb.db.Model(&scenario).Updates(&map[string]interface{}{"interval": interval, "last_scheduled_time": lastScheduledTime})
+	ldb.db.Model(&scenario).Updates(&map[string]interface{}{
+		"last_scheduled_time": lastScheduledTime,
+		"interval":            interval,
+	})
 
 	return nil
 }
 
-func generateRandomKey() []byte {
-	key := make([]byte, 8)
-	if _, err := rand.Read(key); err != nil {
-		panic(err)
-	}
-	fmt.Printf("Key: %b \n", key)
-
-	return key
-}
-
-func (ldb *LegatoDB) SetNewScheduleToken(u *User, scenarioID uint) ([]byte, error) {
+func (ldb *LegatoDB) SetNewScheduleToken(u *models.User, scenarioID uint) (string, error) {
 	var scenario Scenario
 	ldb.db.Where(&Scenario{UserID: u.ID}).Where("id = ?", scenarioID).Find(&scenario)
 	if scenario.ID != scenarioID {
-		return []byte{}, errors.New("the scenario is not in user scenarios")
+		return "", errors.New("the scenario is not in user scenarios")
 	}
 
-	// Generate new token
-	token := generateRandomKey()
+	token := uuid.NewV4()
 
 	ldb.db.Model(&scenario).Updates(&Scenario{ScheduleToken: token})
 
-	return token, nil
+	return token.String(), nil
 }
 
 // Service management methods
@@ -217,33 +204,6 @@ func (ldb *LegatoDB) SetNewScheduleToken(u *User, scenarioID uint) ([]byte, erro
 //
 //	return nil
 //}
-
-func (s Scenario) Schedule(scheduleToken []byte) error {
-	if s.Interval != 0 {
-		log.Printf("Scheduling the scenario for %d minutes later\n", s.Interval)
-		minutes := time.Duration(s.Interval) * time.Minute
-		schedule := &api.NewStartScenarioSchedule{
-			ScheduledTime: time.Now().Add(minutes),
-			SystemTime:    time.Now(),
-			Token:         scheduleToken,
-		}
-		// Make http request to enqueue this job
-		schedulerUrl := fmt.Sprintf("%s/api/schedule/scenario/%d", "", s.ID)
-		//schedulerUrl := fmt.Sprintf("%s/api/schedule/scenario/%d", env.ENV.SchedulerUrl, s.ID)
-		body, err := json.Marshal(schedule)
-		if err != nil {
-			return err
-		}
-		reqBody := bytes.NewBuffer(body)
-		_, err = http.Post(schedulerUrl, "application/json", reqBody)
-		if err != nil {
-			return err
-		}
-		log.Println("Scenario Scheduled successfully")
-	}
-
-	return nil
-}
 
 //// Prepare
 //// To Prepare scenario

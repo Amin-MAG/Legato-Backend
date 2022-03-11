@@ -112,6 +112,7 @@ func (ldb *LegatoDB) DeleteServiceById(scenario *models.Scenario, serviceId uint
 	}
 
 	// Note: webhook and http records should be deleted here, too
+	// TODO: delete all of the webhooks, ... with this service ID
 	ldb.db.Delete(srv)
 
 	return nil

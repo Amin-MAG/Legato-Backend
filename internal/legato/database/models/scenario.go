@@ -16,6 +16,6 @@ type Scenario struct {
 	Interval          int32
 	LastScheduledTime time.Time
 	Services          []Service
-	//ScheduleToken     []byte
+	ScheduleToken     string
 	//Histories         []History
 }

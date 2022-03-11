@@ -2,6 +2,7 @@ package database
 
 import (
 	"legato_server/internal/legato/database/models"
+	"time"
 )
 
 type Database interface {
@@ -25,8 +26,8 @@ type Database interface {
 	UpdateUserScenarioById(u *models.User, scenarioID uint, updatedScenario models.Scenario) error
 	DeleteUserScenarioById(u *models.User, scenarioID uint) error
 	GetScenarioRootServices(s models.Scenario) ([]models.Service, error)
-	//UpdateScenarioScheduleInfoById(u *User, scenarioID uint, lastScheduledTime time.Time, interval int32) error
-	//SetNewScheduleToken(u *User, scenarioID uint) ([]byte, error)
+	UpdateScenarioScheduleByID(u *models.User, scenarioID uint, lastScheduledTime time.Time, interval int32) error
+	SetNewScheduleToken(u *models.User, scenarioID uint) (string, error)
 
 	/*
 		Nodes and services
