@@ -33,3 +33,6 @@ server.key
 
 ### Vagrant Patch ###
 *.box
+
+.obsidian
+
